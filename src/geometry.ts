@@ -1,4 +1,4 @@
-import { roundDown, roundUp } from "./utils";
+import { hex, roundDown, roundUp } from "./utils";
 
 export type Row = {
     row: number;
@@ -13,34 +13,39 @@ export type Rect = {
     left: number;
 };
 
+export type Label = {
+    y: number;
+    text: string;
+};
+
 export class Geometry {
-    rowSize: number;
+    rowBytes: number;
     rowWidth: number;
     rowHeight: number;
 
-    constructor(rowSize: number, rowWidth: number, rowHeight: number) {
-        this.rowSize = rowSize;
+    constructor(rowBytes: number, rowWidth: number, rowHeight: number) {
+        this.rowBytes = rowBytes;
         this.rowWidth = rowWidth;
         this.rowHeight = rowHeight;
     }
 
     makeRows(start: number, end: number): Row[] {
-        const roundedStart = this.roundDown(start);
-        const roundedEnd = this.roundUp(end);
+        const roundedStart = this.floor(start);
+        const roundedEnd = this.ceil(end);
         const count = this.addressToRow(roundedEnd - roundedStart);
         const startRow = this.addressToRow(start);
         const rows = [];
 
         for (let n = 0; n < count; ++n) {
             let s = 0;
-            let e = this.rowSize;
+            let e = this.rowBytes;
 
             if (count === 1 || n === 0) {
                 s = (start - roundedStart);
             }
             
             if (count === 1 || n === count - 1) {
-                e = (end - this.roundDown(end));
+                e = (end - this.floor(end - 1));
             }
             rows.push({row: startRow + n, start: s, end: e})
         };
@@ -50,24 +55,36 @@ export class Geometry {
     rowToRect(row: Row): Rect {
         const top = this.rowToHeight(row.row);
         const bottom = top + this.rowHeight;
-        const left = this.rowWidth * row.start / this.rowSize;
-        const right = this.rowWidth * row.end / this.rowSize;
+        const left = this.rowWidth * row.start / this.rowBytes;
+        const right = this.rowWidth * row.end / this.rowBytes;
         return {top, right, bottom, left};
     }
 
     addressToRow(val: number): number {
-        return Math.floor(val / this.rowSize);
+        return Math.floor(val / this.rowBytes);
     }
 
     rowToHeight(val: number): number {
         return val * this.rowHeight;
     }
 
-    roundDown(val: number): number {
-        return roundDown(val, this.rowSize);
+    floor(val: number): number {
+        return roundDown(val, this.rowBytes);
     }
 
-    roundUp(val: number): number {
-        return roundUp(val, this.rowSize);
+    ceil(val: number): number {
+        return roundUp(val, this.rowBytes);
+    }
+
+    addressLabels(start: number, end: number): Label[] {
+        const labels = [];
+        while (start < end) {
+            labels.push({
+                y: this.rowToHeight(this.addressToRow(start)),
+                text: start.toString(16)
+            });
+            start += this.rowBytes;
+        }
+        return labels;
     }
 };
