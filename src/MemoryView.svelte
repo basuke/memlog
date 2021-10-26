@@ -30,7 +30,8 @@ $: endRow = geo.addressToRow(end);
 $: width = addressWidth + padding + rowWidth;
 $: height = (endRow - startRow) * rowHeight + 2 * topMargin;
 
-$: layers = getLayers(regions).map(layer => [layer, true]);
+$: layers = getLayers(regions);
+const disabledLayers = {};
 
 function color(region, config): string {
     const color = config?.layers[region.layer]?.types[region.type]?.color;
@@ -39,11 +40,12 @@ function color(region, config): string {
 
 </script>
 
-<ul>
+<ul class="hide-layers">
+    <li class=header>Hide Layer:</li>
     {#each layers as layer(layer)}
         <li>
-            <input type=checkbox>
-            {layer[0]}
+            <input type=checkbox bind:checked={disabledLayers[layer]}>
+            {layer}
         </li>
     {/each}
 </ul>
@@ -67,8 +69,8 @@ function color(region, config): string {
         <Transform translateX={addressWidth + padding}> 
             <RegionShape {geo} start={start} end={end} color='url(#transparent)'/>
             {#each layers as layer(layer)}
-                {#if layer[1]}
-                    {#each rangesOfLayer(regions, layer[0]) as region}
+                {#if !disabledLayers[layer]}
+                    {#each rangesOfLayer(regions, layer) as region}
                         <RegionShape {geo}
                             border
                             start={region.start}
@@ -83,3 +85,17 @@ function color(region, config): string {
 </svg> 
 
 range: {range}, start: {hex(start)}, end: {hex(end)}, startRow: {startRow}, endRow: {endRow}, widht: {width}, height: {height}
+
+
+<style>
+
+.hide-layers {
+    display: flex;
+    padding: 0;
+    list-style: none;
+}
+
+.hide-layers li {
+    padding-right: 0.5rem;
+}
+</style>
