@@ -1,11 +1,13 @@
 <script lang=ts>
 
-import {calcRange, hex, M} from './utils';
-import Region from './Region.svelte';
+import {hex, M} from './utils';
+import RegionShape from './Region.svelte';
 import Transform from './Transform.svelte';
 import { Geometry } from './geometry';
+import { calcRange, layers as getLayers, rangesOfLayer, RegionMap } from './region';
 
-export let regions = [];
+export let regions: RegionMap = {};
+export let config = {};
 export let className = '';
 export let style = '';
 
@@ -28,13 +30,27 @@ $: endRow = geo.addressToRow(end);
 $: width = addressWidth + padding + rowWidth;
 $: height = (endRow - startRow) * rowHeight + 2 * topMargin;
 
+$: layers = getLayers(regions).map(layer => [layer, true]);
+
+function color(region, config): string {
+    const color = config?.layers[region.layer]?.types[region.type]?.color;
+    return region.color || color || 'lightblue';
+}
+
 </script>
+
+<ul>
+    {#each layers as layer(layer)}
+        <li>
+            <input type=checkbox>
+            {layer[0]}
+        </li>
+    {/each}
+</ul>
 
 <svg {height} {width} {style} class={className}>
     <defs>
-        <pattern id="transparent" patternUnits="userSpaceOnUse"
-        patternTransform="rotate(45)"
-        width="8" height="8">
+        <pattern id="transparent" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" width="8" height="8">
             <rect x="0" y="0" width="4" height="8" fill="lightgray"/>
         </pattern>
     </defs>
@@ -49,16 +65,21 @@ $: height = (endRow - startRow) * rowHeight + 2 * topMargin;
 
         <!-- address map -->
         <Transform translateX={addressWidth + padding}> 
-            <Region {geo} start={start} end={end} color='url(#transparent)'/>
-            {#each regions as region}
-                <Region {geo}
-                    border
-                    start={region.start}
-                    end={region.start + region.size}
-                    color={region.color || 'white'}
-                />
+            <RegionShape {geo} start={start} end={end} color='url(#transparent)'/>
+            {#each layers as layer(layer)}
+                {#if layer[1]}
+                    {#each rangesOfLayer(regions, layer[0]) as region}
+                        <RegionShape {geo}
+                            border
+                            start={region.start}
+                            end={region.start + region.size}
+                            color={color(region, config)}
+                        />
+                    {/each}
+                {/if}
             {/each}
-        </Transform>
+            </Transform>
     </Transform>
 </svg> 
-start: {hex(start)}, end: {hex(end)}
+
+range: {range}, start: {hex(start)}, end: {hex(end)}, startRow: {startRow}, endRow: {endRow}, widht: {width}, height: {height}
