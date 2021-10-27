@@ -9,7 +9,7 @@ export class Log {
     action: string = '';
     ts: number = 0;
     layer: string = '';
-    addr: number = 0;
+    addr: number = -1;
     size?: number;
     color?: string;
     type?: string;
@@ -21,7 +21,7 @@ export class Log {
     }
 
     validate(): void {
-        if (!this.addr) {
+        if (this.addr < 0) {
             throw new Error("'addr' is required");
         }
 

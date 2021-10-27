@@ -101,7 +101,7 @@ function loadFile(source) {
     <MemoryView {regions} {config} rowBytes={64 * 1024 * 4} style="border: solid 1px gray" />
 </main>
 <button on:click={() => {
-    const source = "alloc ts:1 addr:3*M size:0.125*M\n";
+    const source = "alloc ts:1 addr:0 size:0.125*M\n";
     const logs = parse(source);
     console.log('logs', logs);
     regions = processLog(regions, logs[0]);
