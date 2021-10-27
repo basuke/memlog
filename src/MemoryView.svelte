@@ -7,6 +7,7 @@ import Legend from './Legend.svelte';
 import { Geometry } from './geometry';
 import { calcRange, layers as getLayers, rangesOfLayer, RegionMap } from './region';
 import type { Config } from './config';
+import AddressColumn from './AddressColumn.svelte';
 
 export let regions: RegionMap = {};
 export let config: Config = { layers:{} };
@@ -63,11 +64,7 @@ function color(region, config): string {
 
     <Transform translateY={topMargin - startRow * rowHeight}>
         <!-- label -->
-        <g stroke-width="0.2" font-family=monospace color=black font-size=12 text-anchor=end>
-            {#each geo.addressLabels(start, end) as label(label.y)}
-                <text x={addressWidth} y={label.y + 12}>{label.text}</text>
-            {/each}
-        </g>
+        <AddressColumn {geo} {start} {end} width={addressWidth} />
 
         <!-- address map -->
         <Transform translateX={addressWidth + padding}> 

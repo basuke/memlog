@@ -13,11 +13,6 @@ export type Rect = {
     left: number;
 };
 
-export type Label = {
-    y: number;
-    text: string;
-};
-
 export class Geometry {
     rowBytes: number;
     rowWidth: number;
@@ -74,17 +69,5 @@ export class Geometry {
 
     ceil(val: number): number {
         return roundUp(val, this.rowBytes);
-    }
-
-    addressLabels(start: number, end: number): Label[] {
-        const labels = [];
-        while (start < end) {
-            labels.push({
-                y: this.rowToHeight(this.addressToRow(start)),
-                text: start.toString(16)
-            });
-            start += this.rowBytes;
-        }
-        return labels;
     }
 };
