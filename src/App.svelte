@@ -4,31 +4,7 @@ import MemoryView from './MemoryView.svelte';
 import { parse } from './memlog';
 import { processLog } from './region';
 import Uploader from './Uploader.svelte';
-import type { Config } from './config';
-
-const config: Config = {
-    layers: {
-        vm: {
-            types: {
-                rw: { color: 'lightblue' },
-                _: { color: 'DeepPink' },
-            },
-        },
-        bmalloc: {
-            types: {
-                free: { color: 'lightgray' },
-                large: { color: 'SlateBlue' },
-                chunk: { color: 'SandyBrown' },
-                perProcess: { color: 'lime' },
-                perThread: { color: 'OrangeRed' },
-                vector: { color: 'DeepPink' },
-                objectTypeTable: { color: 'DarkOliveGreen' },
-                external: { color: 'PaleGreen' },
-                _: { color: 'Fuchsia' },
-            },
-        },
-    },
-};
+import config from './configs/webkit.config';
 
 const test = `# simple case
 alloc ts:0 addr:1*M/2 size:1*M/4
