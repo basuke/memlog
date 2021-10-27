@@ -2,8 +2,6 @@
 
 import { createEventDispatcher } from 'svelte';
 
-export let label = "Load";
-
 const dispatch = createEventDispatcher();
 
 let files;
