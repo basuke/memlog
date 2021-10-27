@@ -5,9 +5,7 @@ export let translateX: number | undefined = undefined;
 export let translateY: number | undefined = undefined;
 export let rotate: number | undefined = undefined;
 
-$: args = {translate, translateX, translateY, rotate};
-
-function makeTransform(args) {
+$: transform = ((): string => {
     const ops = [];
 
     if (translate) {
@@ -30,8 +28,8 @@ function makeTransform(args) {
     }
 
     return ops.join(' ');
-}
+})();
 
 </script>
 
-<g transform={makeTransform(args)}><slot/></g>
+<g {transform}><slot/></g>
