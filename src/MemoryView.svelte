@@ -5,12 +5,16 @@ import RegionShape from './Region.svelte';
 import Transform from './Transform.svelte';
 import Legend from './Legend.svelte';
 import { Geometry } from './geometry';
-import { calcRange, layers as getLayers, rangesOfLayer, RegionMap } from './region';
+import { layers as getLayers, rangesOfLayer, RegionMap } from './region';
 import type { Config } from './config';
 import AddressColumn from './AddressColumn.svelte';
 
 export let regions: RegionMap = {};
+export let start = 0;
+export let end = 0;
+
 export let config: Config = { layers:{} };
+
 export let className = '';
 export let style = '';
 
@@ -21,19 +25,16 @@ export let rowBytes = 1 * M / 1; // bytes
 export let rowWidth = 640; // px
 export let rowHeight = 16; // px
 
-console.log('MemoryView: init');
-
 $: geo = new Geometry(rowBytes, rowWidth, rowHeight);
 
-$: range = calcRange(regions);
-
-$: start = geo.floor(range[0]);
-$: end = geo.ceil(range[1]);
 $: startRow = geo.addressToRow(start);
 $: endRow = geo.addressToRow(end);
 
 $: width = addressWidth + padding + rowWidth;
 $: height = (endRow - startRow) * rowHeight + 2 * topMargin;
+
+$: start = geo.floor(start);
+$: end = geo.ceil(end);
 
 $: layers = getLayers(regions);
 const disabledLayers = {};
@@ -84,10 +85,6 @@ function color(region, config): string {
         </Transform>
     </Transform>
 </svg> 
-<br>
-
-range: {range}, start: {hex(start)}, end: {hex(end)}, startRow: {startRow}, endRow: {endRow}, widht: {width}, height: {height}
-
 
 <style>
 
