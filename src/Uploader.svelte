@@ -8,16 +8,9 @@ const dispatch = createEventDispatcher();
 
 let files;
 
-function isReady(files) {
-    return (files && files.length);
-}
-
-function loadFile() {
-    if (!isReady(files)) return;
-
+$: if (files && files.length) {
     const reader = new FileReader();
     reader.onload = function() {
-        console.log(reader);
         dispatch('load', reader.result as string);
     };
     reader.onerror = function() {
@@ -29,4 +22,3 @@ function loadFile() {
 </script>
 
 <input type=file name="upload" bind:files accept="*/*">
-<button disabled={!isReady(files)} on:click={loadFile}>{label}</button>

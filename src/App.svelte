@@ -23,15 +23,20 @@ const config: Config = {
         vm: {
             types: {
                 rw: { color: 'lightblue' },
-                _: { color: 'pink' },
+                _: { color: 'DeepPink' },
             },
         },
         bmalloc: {
             types: {
                 free: { color: 'lightgray' },
-                large: { color: 'green' },
-                chunk: { color: 'orange' },
-                _: { color: 'blue' },
+                large: { color: 'SlateBlue' },
+                chunk: { color: 'SandyBrown' },
+                perProcess: { color: 'lime' },
+                perThread: { color: 'OrangeRed' },
+                vector: { color: 'DeepPink' },
+                objectTypeTable: { color: 'DarkOliveGreen' },
+                external: { color: 'PaleGreen' },
+                _: { color: 'Fuchsia' },
             },
         },
     },

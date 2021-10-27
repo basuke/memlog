@@ -3,6 +3,7 @@
 import {hex, M} from './utils';
 import RegionShape from './Region.svelte';
 import Transform from './Transform.svelte';
+import Legend from './Legend.svelte';
 import { Geometry } from './geometry';
 import { calcRange, layers as getLayers, rangesOfLayer, RegionMap } from './region';
 
@@ -51,6 +52,7 @@ function color(region, config): string {
         </li>
     {/each}
 </ul>
+<Legend name="bmalloc" types={config.layers.bmalloc.types}/>
 <svg {height} {width} {style} class={className}>
     <defs>
         <pattern id="transparent" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" width="8" height="8">
