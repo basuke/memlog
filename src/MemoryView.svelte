@@ -49,7 +49,6 @@ function color(region, config): string {
         </li>
     {/each}
 </ul>
-
 <svg {height} {width} {style} class={className}>
     <defs>
         <pattern id="transparent" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" width="8" height="8">
@@ -83,6 +82,7 @@ function color(region, config): string {
             </Transform>
     </Transform>
 </svg> 
+<br>
 
 range: {range}, start: {hex(start)}, end: {hex(end)}, startRow: {startRow}, endRow: {endRow}, widht: {width}, height: {height}
 
@@ -91,6 +91,7 @@ range: {range}, start: {hex(start)}, end: {hex(end)}, startRow: {startRow}, endR
 
 .hide-layers {
     display: flex;
+    justify-content: center;
     padding: 0;
     list-style: none;
 }
@@ -98,4 +99,9 @@ range: {range}, start: {hex(start)}, end: {hex(end)}, startRow: {startRow}, endR
 .hide-layers li {
     padding-right: 0.5rem;
 }
+
+.header {
+    font-weight: bolder;
+}
+
 </style>

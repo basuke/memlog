@@ -36,7 +36,7 @@ const config: Config = {
     },
 };
 
-const source = `# map file format
+const source1 = `# map file format
 # vm
 
 alloc ts:122 layer:vm addr:0x20014000 size:0x20700000+1049806-0x20014000 type:rw
@@ -57,6 +57,26 @@ split ts:12345 addr:0x20014000 size:1015808 layer:bmalloc
 mod ts:12345 addr:0x20014000 layer:bmalloc type:chunk
 `;
 
+const source2 = `
+# memlog started.
+alloc ts:8 layer:vm addr:0x200f80000 size:49152 type:rw
+alloc ts:8 layer:vm addr:0x200f8c000 size:16384 type:rw
+alloc ts:8 layer:vm addr:0x200f94000 size:2097152 type:rw
+split ts:8 layer:vm addr:0x200f94000 size:442368
+free ts:8 layer:vm addr:0x200f94000
+split ts:8 layer:vm addr:0x201000000 size:1048576
+free ts:8 layer:vm addr:0x201100000
+alloc ts:8 layer:vm addr:0x200f94000 size:16384 type:rw
+alloc ts:8 layer:bmalloc addr:0x201000000 size:1048576 type:free
+mod ts:8 layer:bmalloc addr:0x201000000 type:large
+alloc ts:8 layer:vm addr:0x200f98000 size:16384 type:rw
+alloc ts:8 layer:vm addr:0x200f9c000 size:16384 type:rw
+mod ts:8 layer:bmalloc addr:0x201000000 type:chunk
+alloc ts:11 layer:vm addr:0x201100000 size:2097152 type:rw
+split ts:11 layer:vm addr:0x201100000 size:1048576
+free ts:11 layer:vm addr:0x201200000
+`;
+
 const samples: RegionMap = {
     0x20014000: { layer: 'bmalloc', type: 'green', start: 0x20014000, size: 5 * M},
     0x20514000: { layer: 'bmalloc', type: 'gray', start: 0x20514000, size: 1 * M - 0x8000},
@@ -64,25 +84,39 @@ const samples: RegionMap = {
     0x20700000: { layer: 'bmalloc', type: 'orange', start: 0x20700000, size: 0x100000 + 1230},
 };
 
-const logs = parse(source);
-const regions = logs.reduce(processLog, {});
+const logs = parse(source2);
+let regions = {};
+
+let files;
+
+function loadFile() {
+    const reader = new FileReader();
+    reader.onload = function() {
+        const logs = parse(reader.result as string);
+        regions = logs.reduce(processLog, {});
+    };
+
+    const file = files[0];
+    reader.readAsText(file);
+}
 
 </script>
 
 <main>
     <h1>Memory Viewer</h1>
+    Choose memlog file: <input type=file bind:files> <button disabled={!files} on:click={loadFile}>Load</button>
     <MemoryView {regions} {config} rowBytes={64 * 1024 * 4} style="border: solid 1px gray" />
-    <pre>{JSON.stringify(logs, null, 2)}</pre>
-    <pre>{JSON.stringify(regions, null, 2)}</pre>
 </main>
+<pre>{JSON.stringify(logs, null, 2)}</pre>
+<pre>{JSON.stringify(regions, null, 2)}</pre>
 
 <style>
 
 main {
+    text-align: center;
 }
 
 h1 {
-    text-align: center;
     color: #ff3e00;
     font-size: 1.5rem;
     font-weight: lighter;
