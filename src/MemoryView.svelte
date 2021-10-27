@@ -6,9 +6,10 @@ import Transform from './Transform.svelte';
 import Legend from './Legend.svelte';
 import { Geometry } from './geometry';
 import { calcRange, layers as getLayers, rangesOfLayer, RegionMap } from './region';
+import type { Config } from './config';
 
 export let regions: RegionMap = {};
-export let config = {};
+export let config: Config = { layers:{} };
 export let className = '';
 export let style = '';
 
@@ -37,7 +38,7 @@ $: layers = getLayers(regions);
 const disabledLayers = {};
 
 function color(region, config): string {
-    const color = config?.layers[region.layer]?.types[region.type]?.color;
+    const color = config.layers[region.layer]?.types[region.type]?.color;
     return region.color || color || 'lightblue';
 }
 

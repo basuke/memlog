@@ -5,18 +5,7 @@ import { M } from './utils';
 import { parse, Log } from './memlog';
 import { processLog, RegionMap } from './region';
 import Uploader from './Uploader.svelte';
-
-type TypeConfig = {
-    color: string;
-};
-
-type LayerConfig = {
-    types: Record<string, TypeConfig>;
-};
-
-type Config = {
-    layers: Record<string, LayerConfig>;
-};
+import type { Config } from './config';
 
 const config: Config = {
     layers: {
