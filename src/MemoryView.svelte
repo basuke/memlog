@@ -18,6 +18,8 @@ export let rowBytes = 1 * M / 1; // bytes
 export let rowWidth = 640; // px
 export let rowHeight = 16; // px
 
+console.log('MemoryView: init');
+
 $: geo = new Geometry(rowBytes, rowWidth, rowHeight);
 
 $: range = calcRange(regions);

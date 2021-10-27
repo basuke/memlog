@@ -4,6 +4,7 @@ import MemoryView from './MemoryView.svelte';
 import { M } from './utils';
 import { parse, Log } from './memlog';
 import { processLog, RegionMap } from './region';
+import Uploader from './Uploader.svelte';
 
 type TypeConfig = {
     color: string;
@@ -84,29 +85,33 @@ split ts:11 layer:vm addr:0x201100000 size:1048576
 free ts:11 layer:vm addr:0x201200000
 `;
 
-let logs = parse(source2);
-let regions = logs.reduce(processLog, {});
+const source3 = `# simple case
+alloc ts:0 addr:1*M/2 size:1*M/4
+alloc ts:0 addr:2*M size:1*M/2
+`;
+
+let regions = parse(source3).reduce(processLog, {});
+let history = [];
 
 let files;
 
-function loadFile() {
-    const reader = new FileReader();
-    reader.onload = function() {
-        logs = parse(reader.result as string);
-        regions = logs.reduce(processLog, {});
-    };
-
-    const file = files[0];
-    reader.readAsText(file);
+function loadFile(source) {
+    regions = parse(source).reduce(processLog, {});
 }
 
 </script>
 
 <main>
     <h1>Memory Viewer</h1>
-    Choose memlog file: <input type=file bind:files> <button disabled={!files} on:click={loadFile}>Load</button>
+    Choose memlog file: <Uploader on:load={event => loadFile(event.detail)} />
     <MemoryView {regions} {config} rowBytes={64 * 1024 * 4} style="border: solid 1px gray" />
 </main>
+<button on:click={() => {
+    const source = "alloc ts:1 addr:3*M size:0.125*M\n";
+    const logs = parse(source);
+    console.log('logs', logs);
+    regions = processLog(regions, logs[0]);
+}}>Test</button>
 <pre>{JSON.stringify(regions, null, 2)}</pre>
 
 <style>
