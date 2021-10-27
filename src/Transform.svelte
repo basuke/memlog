@@ -5,9 +5,9 @@ export let translateX: number | undefined = undefined;
 export let translateY: number | undefined = undefined;
 export let rotate: number | undefined = undefined;
 
-const transform = makeTransform();
+$: args = {translate, translateX, translateY, rotate};
 
-function makeTransform() {
+function makeTransform(args) {
     const ops = [];
 
     if (translate) {
@@ -34,4 +34,4 @@ function makeTransform() {
 
 </script>
 
-<g {transform}><slot/></g>
+<g transform={makeTransform(args)}><slot/></g>

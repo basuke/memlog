@@ -9,8 +9,8 @@ export let geo: Geometry;
 export let color = 'green';
 export let border: boolean = false;
 
-const rows = geo.makeRows(start, end);
-const path = makePath(rows);
+$: rows = geo.makeRows(start, end);
+$: path = makePath(rows);
 
 function makePath(rows: Row[]) {
     const commands =[];

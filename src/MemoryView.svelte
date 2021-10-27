@@ -81,7 +81,7 @@ function color(region, config): string {
                     {/each}
                 {/if}
             {/each}
-            </Transform>
+        </Transform>
     </Transform>
 </svg> 
 <br>
