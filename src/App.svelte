@@ -36,6 +36,13 @@ const config: Config = {
     },
 };
 
+const samples: RegionMap = {
+    0x20014000: { layer: 'bmalloc', type: 'green', start: 0x20014000, size: 5 * M},
+    0x20514000: { layer: 'bmalloc', type: 'gray', start: 0x20514000, size: 1 * M - 0x8000},
+    0x20614000: { layer: 'bmalloc', type: 'pink', start: 0x20614000, size: M - 0x13000},
+    0x20700000: { layer: 'bmalloc', type: 'orange', start: 0x20700000, size: 0x100000 + 1230},
+};
+
 const source1 = `# map file format
 # vm
 
@@ -77,22 +84,15 @@ split ts:11 layer:vm addr:0x201100000 size:1048576
 free ts:11 layer:vm addr:0x201200000
 `;
 
-const samples: RegionMap = {
-    0x20014000: { layer: 'bmalloc', type: 'green', start: 0x20014000, size: 5 * M},
-    0x20514000: { layer: 'bmalloc', type: 'gray', start: 0x20514000, size: 1 * M - 0x8000},
-    0x20614000: { layer: 'bmalloc', type: 'pink', start: 0x20614000, size: M - 0x13000},
-    0x20700000: { layer: 'bmalloc', type: 'orange', start: 0x20700000, size: 0x100000 + 1230},
-};
-
-const logs = parse(source2);
-let regions = {};
+let logs = parse(source2);
+let regions = logs.reduce(processLog, {});
 
 let files;
 
 function loadFile() {
     const reader = new FileReader();
     reader.onload = function() {
-        const logs = parse(reader.result as string);
+        logs = parse(reader.result as string);
         regions = logs.reduce(processLog, {});
     };
 
@@ -107,7 +107,6 @@ function loadFile() {
     Choose memlog file: <input type=file bind:files> <button disabled={!files} on:click={loadFile}>Load</button>
     <MemoryView {regions} {config} rowBytes={64 * 1024 * 4} style="border: solid 1px gray" />
 </main>
-<pre>{JSON.stringify(logs, null, 2)}</pre>
 <pre>{JSON.stringify(regions, null, 2)}</pre>
 
 <style>

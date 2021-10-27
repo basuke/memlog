@@ -12,11 +12,11 @@ export let className = '';
 export let style = '';
 
 export let topMargin = 1; // px
-export let padding = 10; // px
-export let addressWidth = 100; // px
+export let padding = 8; // px
+export let addressWidth = 80; // px
 export let rowBytes = 1 * M / 1; // bytes
-export let rowWidth = 560; // px
-export let rowHeight = 12; // px
+export let rowWidth = 640; // px
+export let rowHeight = 16; // px
 
 $: geo = new Geometry(rowBytes, rowWidth, rowHeight);
 
