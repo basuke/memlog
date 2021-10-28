@@ -1,7 +1,10 @@
-export enum Actions {
+import { calcRange, Region, RegionMap } from './region';
+
+enum Actions {
     Alloc = 'alloc',
     Mod = 'mod',
     Split = 'split',
+    Merge = 'merge',
     Free = 'free',
 };
 
@@ -11,6 +14,7 @@ export class Log {
     layer: string = '';
     addr: number = -1;
     size?: number;
+    other?: number = -1;
     color?: string;
     type?: string;
     attrs: Record<string, string> = {};
@@ -35,6 +39,11 @@ export class Log {
             case Actions.Free:
                 if (this.size)
                     throw new Error(`'size' is not allowed for ${this.action}`);
+                break;
+
+            case Actions.Merge:
+                if (this.other < 0)
+                    throw new Error(`'other' is required for ${this.action}`);
                 break;
 
             case Actions.Mod:
@@ -63,7 +72,7 @@ export class Parser {
 
         parameters.map(param => {
             const [key, value] = param.split(':');
-            if (key === 'addr' || key === 'size' || key === 'ts')
+            if (key === 'addr' || key === 'size' || key === 'other' || key === 'ts')
                 log[key] = eval(value);
             else if (key === 'layer' || key === 'type')
                 log[key] = value;
@@ -115,4 +124,145 @@ export class Parser {
 export function parse(source: string): Log[] {
     const parser = new Parser();
     return parser.parse(source);
+}
+
+export type Memlog = {
+    history: RegionMap[];
+    logs: Log[];
+    length: number;
+    address: {
+        start: number;
+        end: number;
+    };
+};
+
+export function load(source): Memlog {
+    let start = -1;
+    let end = -1;
+
+    const logs = parse(source);
+    const history = logs.reduce((history: RegionMap[], log: Log): RegionMap[] => {
+        const prevRegions = history.length ? history[history.length - 1] : {};
+        const regions = processLog(prevRegions, log);
+
+        const range = calcRange(regions);
+        start = start >= 0 ? Math.min(start, range[0]) : range[0];
+        end = end >= 0 ? Math.max(end, range[1]) : range[1];
+
+        return [...history, regions];
+    }, []);
+
+    start = Math.max(start, 0);
+    end = Math.max(end, 0);
+
+    return { history, logs,  length: history.length, address: { start, end } };
+}
+
+function findRegion(map: RegionMap, layer: string, addr: number): string | undefined {
+    const key = makekey(layer, addr);
+    return (key in map) ? key : undefined;
+}
+
+function getkey(region: Region): string {
+    return makekey(region.layer, region.start);
+}
+
+function makekey(layer: string, addr: number): string {
+    return layer + ':' + addr;
+}
+
+function newRegion(log: Log): Region {
+    const region = {
+        layer: log.layer,
+        start: log.addr,
+        size: log.size,
+        end: log.addr + log.size,
+        logs: [log.line],
+    };
+
+    return modRegion(region, log);
+}
+
+function splitRegion(regions: RegionMap, region: Region, size: number): void {
+    const remaining = region.size - size;
+    if (size <= 0 || remaining <= 0) throw new Error("Cannot split with zero or negative size");
+
+    const other = {...region, start: region.start + size, size: remaining, logs: [...region.logs]};
+
+    region.size = size;
+    region.end = region.start + size;
+
+    regions[getkey(region)] = region;
+    regions[getkey(other)] = other;
+}
+
+function mergeRegion(map: RegionMap, region: Region, otherAddr: number): void {
+    console.log([map, region, otherAddr]);
+    const otherKey = findRegion(map, region.layer, otherAddr);
+    if (!otherKey) throw new Error("Cannot find with marge target");
+
+    const other = map[otherKey];
+    if (region.end !== other.start) {
+        throw new Error("Cannot merge non-neighbors");
+    }
+
+    region.size += other.size;
+    region.end = other.end;
+
+    map[getkey(region)] = region;
+    delete map[otherKey];
+}
+
+function modRegion(region: Region, log: Log): Region {
+    if ('type' in log) {
+        region.type = log.type;
+    }
+
+    if (log.attrs) {
+        for (const key in log.attrs) {
+            region[key] = log.attrs[key];
+        }
+    }
+    return region;
+}
+
+export function processLog(map: RegionMap, log: Log): RegionMap {
+    map = {...map};
+    const key = findRegion(map, log.layer, log.addr);
+
+    switch (log.action) {
+        case Actions.Alloc:
+            if (key) throw new Error("Region already exists");
+            const region = newRegion(log);
+            map[getkey(region)] = region;
+            break;
+
+        default:
+            if (!key) throw new Error(`Cannot find region with layer = ${log.layer} and start = ${log.addr}(0x${log.addr.toString(16)})`);
+
+            map[key].logs = [...map[key].logs, log.line];
+            const copy = {...map[key]};
+
+            switch (log.action) {
+                case Actions.Free:
+                    delete map[key];
+                    break;
+
+                case Actions.Split:
+                    splitRegion(map, copy, log.size);
+                    break;
+
+                case Actions.Merge:
+                    mergeRegion(map, copy, log.other);
+                    break;
+
+                case Actions.Mod:
+                    map[key] = modRegion(copy, log);
+                    break;
+
+            }
+            if (!key) throw new Error 
+    }
+
+    return map;
 }

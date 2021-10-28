@@ -1,44 +1,36 @@
 <script lang="ts">
 
 import MemoryView from './MemoryView.svelte';
-import { parse } from './memlog';
-import { calcRange, processLog } from './region';
+import { load, Log, parse } from './memlog';
 import Uploader from './Uploader.svelte';
 import config from './configs/webkit.config';
 
 const test = `# simple case
 alloc ts:0 addr:1*M/2 size:1*M/4
 alloc ts:0 addr:2*M size:1*M/2
+split ts:0 addr:2*M size:1*M/4
+free ts:0 addr:2*M+1*M/4
 `;
 
-let regions = {};
-let start = 0;
-let end = 0;
+let memlog = load(test);
+let index = memlog.length - 1;
 
-load(test);
-let history = [];
-
-function load(source) {
-    regions = parse(source).reduce(processLog, {});
-    const range = calcRange(regions);
-    start = range[0];
-    end = range[1];
-}
+$: regions = memlog.history[index];
+$: start = memlog.address.start;
+$: end = memlog.address.end;
 
 </script>
 
 <main>
     <h1>Memory Viewer</h1>
-    Choose memlog file: <Uploader on:load={event => load(event.detail)} />
+    Choose memlog file: <Uploader on:load={event => { memlog = load(event.detail); } } />
+
+        <input type="range" min="0" max={memlog.length - 1} bind:value={index}>
+
+        <pre>{memlog.logs[index]?.line}</pre>
     <MemoryView {regions} {start} {end} {config} rowBytes={64 * 1024 * 4} style="border: solid 1px gray" />
 </main>
-<button on:click={() => {
-    const source = "alloc ts:1 addr:0 size:0.125*M\n";
-    const logs = parse(source);
-    console.log('logs', logs);
-    regions = processLog(regions, logs[0]);
-}}>Test</button>
-<pre>{JSON.stringify(regions, null, 2)}</pre>
+<pre>{JSON.stringify(memlog, null, 2)}</pre>
 
 <style>
 
@@ -50,5 +42,10 @@ h1 {
     color: #ff3e00;
     font-size: 1.5rem;
     font-weight: lighter;
+}
+
+input[type=range] {
+    display: block;
+    width: 100%;
 }
 </style>

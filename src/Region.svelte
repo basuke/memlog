@@ -1,7 +1,6 @@
 <script type=ts>
 
 import type { Geometry, Row } from "./geometry";
-import { hex } from "./utils";
 
 export let start = 0;
 export let end = 0;
