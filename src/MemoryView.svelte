@@ -75,8 +75,8 @@ function color(region, config): string {
                     {#each rangesOfLayer(regions, layer) as region}
                         <RegionShape {geo}
                             border
-                            start={region.start}
-                            end={region.start + region.size}
+                            start={region.addr}
+                            end={region.end}
                             color={color(region, config)}
                         />
                     {/each}

@@ -164,7 +164,7 @@ function findRegion(map: RegionMap, layer: string, addr: number): string | undef
 }
 
 function getkey(region: Region): string {
-    return makekey(region.layer, region.start);
+    return makekey(region.layer, region.addr);
 }
 
 function makekey(layer: string, addr: number): string {
@@ -172,9 +172,9 @@ function makekey(layer: string, addr: number): string {
 }
 
 function newRegion(log: Log): Region {
-    const region = {
+    const region: Region = {
         layer: log.layer,
-        start: log.addr,
+        addr: log.addr,
         size: log.size,
         end: log.addr + log.size,
         logs: [log.line],
@@ -187,10 +187,10 @@ function splitRegion(regions: RegionMap, region: Region, size: number): void {
     const remaining = region.size - size;
     if (size <= 0 || remaining <= 0) throw new Error("Cannot split with zero or negative size");
 
-    const other = {...region, start: region.start + size, size: remaining, logs: [...region.logs]};
+    const other = {...region, addr: region.addr + size, size: remaining, logs: [...region.logs]};
 
     region.size = size;
-    region.end = region.start + size;
+    region.end = region.addr + size;
 
     regions[getkey(region)] = region;
     regions[getkey(other)] = other;
@@ -202,7 +202,7 @@ function mergeRegion(map: RegionMap, region: Region, otherAddr: number): void {
     if (!otherKey) throw new Error("Cannot find with marge target");
 
     const other = map[otherKey];
-    if (region.end !== other.start) {
+    if (region.end !== other.addr) {
         throw new Error("Cannot merge non-neighbors");
     }
 
@@ -238,7 +238,7 @@ export function processLog(map: RegionMap, log: Log): RegionMap {
             break;
 
         default:
-            if (!key) throw new Error(`Cannot find region with layer = ${log.layer} and start = ${log.addr}(0x${log.addr.toString(16)})`);
+            if (!key) throw new Error(`Cannot find region with layer = ${log.layer} and addr = ${log.addr}(0x${log.addr.toString(16)})`);
 
             map[key].logs = [...map[key].logs, log.line];
             const copy = {...map[key]};

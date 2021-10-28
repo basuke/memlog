@@ -1,5 +1,5 @@
 export type Region = {
-    start: number;
+    addr: number;
     size?: number;
     end?: number;
     layer: string;
@@ -14,8 +14,8 @@ export function calcRange(regions: RegionMap): [number, number] {
     const r = Object.values(regions);
 
     return r.length ? [
-        Math.min(...r.map(r => r.start)),
-        Math.max(...r.map(r => r.start + r.size)),
+        Math.min(...r.map(r => r.addr)),
+        Math.max(...r.map(r => r.addr + r.size)),
     ] : [0, 0];
 }
 

@@ -12,12 +12,19 @@ split ts:0 addr:2*M size:1*M/4
 free ts:0 addr:2*M+1*M/4
 `;
 
-let memlog = load(test);
-let index = memlog.length - 1;
+let memlog;
+let index;
 
 $: regions = memlog.history[index];
 $: start = memlog.address.start;
 $: end = memlog.address.end;
+
+function loadSource(source) {
+    memlog = load(source);
+    index = 0;
+}
+
+loadSource(test);
 
 </script>
 
