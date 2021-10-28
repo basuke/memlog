@@ -7,12 +7,12 @@ const config = {
         },
         bmalloc: {
             types: {
-                free: { color: 'lightgray' },
+                free: { color: 'WhiteSmoke' },
                 large: { color: 'SlateBlue' },
                 chunk: { color: 'Wheat' },
                 perProcess: { color: 'lime' },
-                perThread: { color: 'OrangeRed' },
-                vector: { color: 'DeepPink' },
+                perThread: { color: 'Teal' },
+                vector: { color: 'Turquoise' },
                 objectTypeTable: { color: 'DarkOliveGreen' },
                 external: { color: 'PaleGreen' },
             },

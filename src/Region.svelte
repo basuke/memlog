@@ -7,15 +7,17 @@ export let end = 0;
 export let geo: Geometry;
 export let color = 'green';
 export let border: boolean = false;
+export let width: number = 0.2;
 
 $: rows = geo.makeRows(start, end);
 $: path = makePath(rows);
 
 function makePath(rows: Row[]) {
     const commands =[];
+    const d = width / 2;
 
     function box(row: Row) {
-        const {top, left, bottom, right} = geo.rowToRect(row);
+        const {top, left, bottom, right} = geo.rowToRect(row, d);
         commands.push(`M ${left},${top}`);
         commands.push(`L ${right},${top}`);
         commands.push(`L ${right},${bottom}`);
@@ -48,4 +50,4 @@ function makePath(rows: Row[]) {
 
 </script>
 
-    <path d={path} fill={color} stroke="black" stroke-width={border ? 0.25 : 0}/>
+    <path d={path} fill={color} stroke="black" stroke-width={border ? width : 0}/>

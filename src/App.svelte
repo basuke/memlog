@@ -10,10 +10,10 @@ const configs = {
 };
 
 const test = `# simple case
-alloc ts:0 addr:1*M/2 size:1*M/4
-alloc ts:0 addr:2*M size:1*M/2
-split ts:0 addr:2*M size:1*M/4
-free ts:0 addr:2*M+1*M/4
+alloc ts:0 layer:vm addr:1*M/2 size:1*M/4
+alloc ts:0 layer:vm addr:2*M size:1*M/2
+split ts:0 layer:vm addr:2*M size:1*M/4
+free ts:0 layer:vm addr:2*M+1*M/4
 `;
 
 let memlog;

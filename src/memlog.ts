@@ -27,32 +27,35 @@ export class Log {
     }
 
     validate(): void {
-        if (this.addr < 0) {
-            throw new Error("'addr' is required");
-        }
-
         switch (this.action) {
-            case Actions.Alloc:
-            case Actions.Split:
-                if (!this.size)
-                    throw new Error(`'size' is required for ${this.action}`);
-                break;
-
-            case Actions.Free:
-                if (this.size)
-                    throw new Error(`'size' is not allowed for ${this.action}`);
-                break;
-
-            case Actions.Merge:
-                if (this.other < 0)
-                    throw new Error(`'other' is required for ${this.action}`);
-                break;
-
-            case Actions.Mod:
+            case Actions.Begin:
+            case Actions.End:
                 break;
 
             default:
-                throw new Error("Invalid action");
+                switch (this.action) {
+                    case Actions.Alloc:
+                    case Actions.Split:
+                        if (!this.size)
+                            throw new Error(`'size' is required for ${this.action}`);
+                        break;
+
+                    case Actions.Free:
+                        if (this.size)
+                            throw new Error(`'size' is not allowed for ${this.action}`);
+                        break;
+
+                    case Actions.Merge:
+                        if (this.other < 0)
+                            throw new Error(`'other' is required for ${this.action}`);
+                        break;
+
+                    case Actions.Mod:
+                        break;
+
+                    default:
+                        throw new Error("Invalid action");
+                }
         }
     }
 };
@@ -246,6 +249,10 @@ export function processLog(map: RegionMap, log: Log): RegionMap {
             map[getkey(region)] = region;
             break;
 
+        case Actions.Begin:
+        case Actions.End:
+            break;
+
         default:
             if (!key) throw new Error(`Cannot find region with layer = ${log.layer} and addr = ${log.addr}(0x${log.addr.toString(16)})`);
 
@@ -270,7 +277,6 @@ export function processLog(map: RegionMap, log: Log): RegionMap {
                     break;
 
             }
-            if (!key) throw new Error 
     }
 
     return map;

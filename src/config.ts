@@ -1,5 +1,6 @@
 export type TypeConfig = {
-    color: string;
+    color?: string;
+    border?: boolean;
 };
 
 export type LayerConfig = {

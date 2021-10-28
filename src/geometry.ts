@@ -47,11 +47,11 @@ export class Geometry {
         return rows;
     }
 
-    rowToRect(row: Row): Rect {
-        const top = this.rowToHeight(row.row);
-        const bottom = top + this.rowHeight;
-        const left = this.rowWidth * row.start / this.rowBytes;
-        const right = this.rowWidth * row.end / this.rowBytes;
+    rowToRect(row: Row, inset: number = 0): Rect {
+        const top = this.rowToHeight(row.row) + inset;
+        const bottom = top + this.rowHeight - inset;
+        const left = this.rowWidth * row.start / this.rowBytes + inset;
+        const right = this.rowWidth * row.end / this.rowBytes - inset;
         return {top, right, bottom, left};
     }
 

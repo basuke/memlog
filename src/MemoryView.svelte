@@ -6,7 +6,7 @@ import Transform from './Transform.svelte';
 import Legend from './Legend.svelte';
 import { Geometry } from './geometry';
 import { layers as getLayers, rangesOfLayer, RegionMap } from './region';
-import type { Config } from './config';
+import type { Config, TypeConfig } from './config';
 import AddressColumn from './AddressColumn.svelte';
 
 export let regions: RegionMap = {};
@@ -39,9 +39,17 @@ $: end = geo.ceil(end);
 $: layers = getLayers(regions);
 const disabledLayers = {};
 
+function configFor(region, config): TypeConfig {
+    const typeConfig = config.layers[region.layer]?.types[region.type] ?? {};
+    return { color: 'LightSteelBlue', border: true, ...typeConfig };
+}
+
 function color(region, config): string {
-    const color = config.layers[region.layer]?.types[region.type]?.color;
-    return region.color || color || 'lightblue';
+    return configFor(region, config).color;
+}
+
+function border(region, config): boolean {
+    return configFor(region, config).border;
 }
 
 </script>
@@ -74,10 +82,10 @@ function color(region, config): string {
                 {#if !disabledLayers[layer]}
                     {#each rangesOfLayer(regions, layer) as region}
                         <RegionShape {geo}
-                            border
                             start={region.addr}
                             end={region.end}
                             color={color(region, config)}
+                            border={border(region, config)}
                         />
                     {/each}
                 {/if}
