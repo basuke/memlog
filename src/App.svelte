@@ -3,7 +3,11 @@
 import MemoryView from './MemoryView.svelte';
 import { load, Log, parse } from './memlog';
 import Uploader from './Uploader.svelte';
-import config from './configs/webkit.config';
+import webkitConfig from './configs/webkit.config';
+
+const configs = {
+    webkit: webkitConfig,
+};
 
 const test = `# simple case
 alloc ts:0 addr:1*M/2 size:1*M/4
@@ -14,6 +18,7 @@ free ts:0 addr:2*M+1*M/4
 
 let memlog;
 let index;
+let config = configs.webkit;
 
 $: regions = memlog.history[index];
 $: start = memlog.address.start;
@@ -37,7 +42,6 @@ loadSource(test);
         <pre>{memlog.logs[index]?.line}</pre>
     <MemoryView {regions} {start} {end} {config} rowBytes={64 * 1024 * 4} style="border: solid 1px gray" />
 </main>
-<pre>{JSON.stringify(memlog, null, 2)}</pre>
 
 <style>
 

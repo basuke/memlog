@@ -43,10 +43,10 @@ free ts:11 layer:vm addr:0x201200000
 `;
 
 export const samples: RegionMap = {
-    0x20014000: { layer: 'bmalloc', type: 'green', start: 0x20014000, size: 5 * M},
-    0x20514000: { layer: 'bmalloc', type: 'gray', start: 0x20514000, size: 1 * M - 0x8000},
-    0x20614000: { layer: 'bmalloc', type: 'pink', start: 0x20614000, size: M - 0x13000},
-    0x20700000: { layer: 'bmalloc', type: 'orange', start: 0x20700000, size: 0x100000 + 1230},
+    0x20014000: { layer: 'bmalloc', type: 'green', addr: 0x20014000, size: 5 * M},
+    0x20514000: { layer: 'bmalloc', type: 'gray', addr: 0x20514000, size: 1 * M - 0x8000},
+    0x20614000: { layer: 'bmalloc', type: 'pink', addr: 0x20614000, size: M - 0x13000},
+    0x20700000: { layer: 'bmalloc', type: 'orange', addr: 0x20700000, size: 0x100000 + 1230},
 };
 
 

@@ -3,20 +3,23 @@ const config = {
         vm: {
             types: {
                 rw: { color: 'lightblue' },
-                _: { color: 'DeepPink' },
             },
         },
         bmalloc: {
             types: {
                 free: { color: 'lightgray' },
                 large: { color: 'SlateBlue' },
-                chunk: { color: 'SandyBrown' },
+                chunk: { color: 'Wheat' },
                 perProcess: { color: 'lime' },
                 perThread: { color: 'OrangeRed' },
                 vector: { color: 'DeepPink' },
                 objectTypeTable: { color: 'DarkOliveGreen' },
                 external: { color: 'PaleGreen' },
-                _: { color: 'Fuchsia' },
+            },
+        },
+        chunk: {
+            types: {
+                page: { color: 'SandyBrown' },
             },
         },
     },

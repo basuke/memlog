@@ -6,6 +6,8 @@ enum Actions {
     Split = 'split',
     Merge = 'merge',
     Free = 'free',
+    Begin = 'begin',
+    End = 'end',
 };
 
 export class Log {
@@ -58,17 +60,24 @@ export class Log {
 export class Parser {
     no = 0;
     remaining = '';
+    comments = [];
 
     reset(): void {
         this.no = 0;
     }
 
     parseLine(line: string): Log | undefined {
-        if (this.isComment(line)) return undefined;
+        const lineWithNumber = `${this.no}: ${line}`;
+    
+        if (this.isComment(line)) {
+            this.comments.push(lineWithNumber);
+            return undefined;
+        }
 
-        const [action, ...parameters] = line.split(/ +/);
+        const [action, ...parameters] = line.split('#')[0].split(/ +/);
         const log = new Log(action);
-        log.line = `${this.no}: ${line}`;
+        log.line = [...this.comments, lineWithNumber].join("\n");
+        this.comments = [];
 
         parameters.map(param => {
             const [key, value] = param.split(':');
