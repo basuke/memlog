@@ -7,7 +7,7 @@ export let end = 0;
 export let geo: Geometry;
 export let color = 'green';
 export let border: boolean = false;
-export let width: number = 0.2;
+export let width: number = 0.1;
 
 $: rows = geo.makeRows(start, end);
 $: path = makePath(rows);
@@ -50,4 +50,4 @@ function makePath(rows: Row[]) {
 
 </script>
 
-    <path d={path} fill={color} stroke="black" stroke-width={border ? width : 0}/>
+    <path d={path} fill={color} stroke="black" stroke-width={border ? 0.1 : 0}/>

@@ -12,7 +12,7 @@ type Label = {
     text: string;
 };
 
-function addressLabels(start: number, end: number): Label[] {
+function addressLabels(geo: Geometry, start: number, end: number): Label[] {
     const labels = [];
 
     const lastAddress = geo.addressToRow(end) * geo.rowBytes;
@@ -48,7 +48,7 @@ function addressLabels(start: number, end: number): Label[] {
 
 <!-- label -->
 <g stroke-width="0.2" font-family=monospace color=black font-size=12 text-anchor=end>
-    {#each addressLabels(start, end) as label(label.y)}
+    {#each addressLabels(geo, start, end) as label(label.y)}
         <text x={width} y={label.y + 12}>{label.text}</text>
     {/each}
 </g>

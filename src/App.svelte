@@ -1,9 +1,13 @@
 <script lang="ts">
 
 import MemoryView from './MemoryView.svelte';
+import Legend from './Legend.svelte';
 import { load, Log, parse } from './memlog';
 import Uploader from './Uploader.svelte';
 import webkitConfig from './configs/webkit.config';
+import { bytes, K } from './utils';
+
+export let rowBytes = 256 * K; // bytes
 
 const configs = {
     webkit: webkitConfig,
@@ -33,15 +37,29 @@ loadSource(test);
 
 </script>
 
-<main>
-    <h1>Memory Viewer</h1>
-    Choose memlog file: <Uploader on:load={event => { memlog = load(event.detail); } } />
+<h1>Memory Viewer</h1>
 
-        <input type="range" min="0" max={memlog.length - 1} bind:value={index}>
+Choose memlog file: <Uploader on:load={event => {
+    loadSource(event.detail)
+}} />
 
-        <pre>{memlog.logs[index]?.line}</pre>
-    <MemoryView {regions} {start} {end} {config} rowBytes={64 * 1024 * 4} style="border: solid 1px gray" />
-</main>
+<div>
+    <button on:click={ev => rowBytes *= 2}>-</button>
+    {bytes(rowBytes)}
+    <button on:click={ev => rowBytes /= 2}>+</button>
+</div>
+
+<MemoryView {regions} {start} {end} {config} {rowBytes} style="" />
+
+<footer>
+    <pre>{memlog.logs[index]?.line}</pre>
+    <input type="range" min="0" max={memlog.length - 1} bind:value={index}>
+    <table>
+        {#each Object.keys(config.layers) as name}
+            <tr><th>{name}</th><td><Legend types={config.layers[name].types}/></td></tr>
+        {/each}
+    </table>
+</footer>
 
 <style>
 
@@ -59,4 +77,17 @@ input[type=range] {
     display: block;
     width: 100%;
 }
+
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+    border-top: solid 1px gray;
+}
+
+footer th {
+    text-align: right;
+}
+
 </style>

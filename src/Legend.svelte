@@ -1,13 +1,10 @@
 <script lang="ts">
 
-export let name = "";
 export let types = {};
 
 </script>
 
 <div>
-{name}
-
 {#each Object.keys(types) as type}
     <span style="background-color: {types[type].color}">{type}</span>
 {/each}
@@ -17,7 +14,7 @@ export let types = {};
 
 div {
     display: flex;
-    justify-content: center;
+    justify-content: start;
 }
 
 span {

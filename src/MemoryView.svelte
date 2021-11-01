@@ -3,7 +3,6 @@
 import {hex, M} from './utils';
 import RegionShape from './Region.svelte';
 import Transform from './Transform.svelte';
-import Legend from './Legend.svelte';
 import { Geometry } from './geometry';
 import { layers as getLayers, rangesOfLayer, RegionMap } from './region';
 import type { Config, TypeConfig } from './config';
@@ -63,7 +62,6 @@ function border(region, config): boolean {
         </li>
     {/each}
 </ul>
-<Legend name="bmalloc" types={config.layers.bmalloc.types}/>
 <svg {height} {width} {style} class={className}>
     <defs>
         <pattern id="transparent" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" width="8" height="8">

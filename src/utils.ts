@@ -17,3 +17,15 @@ export function hex(val, places = 0) {
 export function arrayOfSize(count: number) {
     return Array.from(new Array(count)).map((_, index) => index);
 }
+
+export function bytes(value: number): string {
+    let unit = 'bytes';
+    const units = ['KB', 'MB', 'GB'];
+
+    while (value >= 1024 && units.length > 0) {
+        unit = units.shift();
+        const mod = value % 1024;
+        value = Math.floor(value / 1024);
+    }
+    return value + unit;
+}
