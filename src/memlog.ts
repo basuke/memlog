@@ -155,13 +155,16 @@ export function load(source): Memlog {
     const logs = parse(source);
     const history = logs.reduce((history: RegionMap[], log: Log): RegionMap[] => {
         const prevRegions = history.length ? history[history.length - 1] : {};
-        const regions = processLog(prevRegions, log);
-
-        const range = calcRange(regions);
-        start = start >= 0 ? Math.min(start, range[0]) : range[0];
-        end = end >= 0 ? Math.max(end, range[1]) : range[1];
-
-        return [...history, regions];
+        try {
+            const regions = processLog(prevRegions, log);
+            const range = calcRange(regions);
+            start = start >= 0 ? Math.min(start, range[0]) : range[0];
+            end = end >= 0 ? Math.max(end, range[1]) : range[1];
+            return [...history, regions];
+        } catch (e) {
+            console.error(e);
+            return history;
+        }
     }, []);
 
     start = Math.max(start, 0);
@@ -209,7 +212,6 @@ function splitRegion(regions: RegionMap, region: Region, size: number): void {
 }
 
 function mergeRegion(map: RegionMap, region: Region, otherAddr: number): void {
-    console.log([map, region, otherAddr]);
     const otherKey = findRegion(map, region.layer, otherAddr);
     if (!otherKey) throw new Error("Cannot find with marge target");
 
@@ -254,7 +256,7 @@ export function processLog(map: RegionMap, log: Log): RegionMap {
             break;
 
         default:
-            if (!key) throw new Error(`Cannot find region with layer = ${log.layer} and addr = ${log.addr}(0x${log.addr.toString(16)})`);
+            if (!key) throw new Error(`Cannot find region with layer = ${log.layer} and addr = ${log.addr}(0x${log.addr.toString(16)}) \n ${log.line}`);
 
             map[key].logs = [...map[key].logs, log.line];
             const copy = {...map[key]};

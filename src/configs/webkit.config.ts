@@ -19,26 +19,26 @@ const config: Config = {
                 external: { color: 'PaleGreen' },
             },
         },
-        chunk: {
-            // containedBy: 'bmalloc.chunk',
-            types: {
-                page: { color: 'SandyBrown' },
-            },
-        },
-        page: {
-            types: {
-                line: { color: 'Sienna', border: false },
-                object: { color: 'Orchid', border: false },
-            },
-        },
-        jsc: {
-            types: {
-                fastMalloc: { color: 'MediumVioletRed', border: true },
-                "fastMalloc-aligned": { color: 'RebeccaPurple', border: true },
-                "iso-aligned": { color: 'Orchid', border: true },
-                "iso-decommit": { color: 'MistyRose', border: true },
-            },
-        },
+        // chunk: {
+        //     // containedBy: 'bmalloc.chunk',
+        //     types: {
+        //         page: { color: 'SandyBrown' },
+        //     },
+        // },
+        // page: {
+        //     types: {
+        //         line: { color: 'Sienna', border: false },
+        //         object: { color: 'Orchid', border: false },
+        //     },
+        // },
+        // jsc: {
+        //     types: {
+        //         fastMalloc: { color: 'MediumVioletRed', border: true },
+        //         "fastMalloc-aligned": { color: 'RebeccaPurple', border: true },
+        //         "iso-aligned": { color: 'Orchid', border: true },
+        //         "iso-decommit": { color: 'MistyRose', border: true },
+        //     },
+        // },
     },
 };
 
