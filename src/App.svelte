@@ -6,6 +6,7 @@ import { load, Log, parse } from './memlog';
 import Uploader from './Uploader.svelte';
 import webkitConfig from './configs/webkit.config';
 import { bytes, K } from './utils';
+import Footer from './Footer.svelte';
 
 export let rowBytes = 256 * K; // bytes
 
@@ -51,14 +52,12 @@ Choose memlog file: <Uploader on:load={event => {
 
 <MemoryView {regions} {start} {end} {config} {rowBytes} style="" />
 
+<div style="visibility: hidden">
+    <Footer {config} {memlog} {index} />
+</div>
+
 <footer>
-    <pre>{memlog.logs[index]?.line}</pre>
-    <input type="range" min="0" max={memlog.length - 1} bind:value={index}>
-    <table>
-        {#each Object.keys(config.layers) as name}
-            <tr><th>{name}</th><td><Legend types={config.layers[name].types}/></td></tr>
-        {/each}
-    </table>
+    <Footer {config} {memlog} bind:index={index} />
 </footer>
 
 <style>
@@ -73,21 +72,12 @@ h1 {
     font-weight: lighter;
 }
 
-input[type=range] {
-    display: block;
-    width: 100%;
-}
-
 footer {
     position: fixed;
     bottom: 0;
-    width: 100%;
+    width: 96%;
     background-color: white;
     border-top: solid 1px gray;
-}
-
-footer th {
-    text-align: right;
 }
 
 </style>
