@@ -13,8 +13,8 @@ export let rowBytes = 0;
 <div class="base">
     <div class="zoom">
         1 row = {bytes(rowBytes)}
-        <button on:click={ev => rowBytes *= 2}><img src="/assets/zoom-out.svg"></button>
-        <button on:click={ev => rowBytes /= 2}><img src="/assets/zoom-in.svg"></button>
+        <button on:click={ev => rowBytes *= 2}><img src="/assets/zoom-out.svg" alt="zoom out"></button>
+        <button on:click={ev => rowBytes /= 2}><img src="/assets/zoom-in.svg" alt="zoom in"></button>
     </div>
 
     <pre>{memlog.logs[index]?.line}</pre>
