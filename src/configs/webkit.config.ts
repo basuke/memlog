@@ -19,12 +19,12 @@ const config: Config = {
                 external: { color: 'PaleGreen' },
             },
         },
-        // chunk: {
-        //     // containedBy: 'bmalloc.chunk',
-        //     types: {
-        //         page: { color: 'SandyBrown' },
-        //     },
-        // },
+        chunk: {
+            // containedBy: 'bmalloc.chunk',
+            types: {
+                page: { color: 'SandyBrown' },
+            },
+        },
         // page: {
         //     types: {
         //         line: { color: 'Sienna', border: false },

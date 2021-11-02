@@ -25,16 +25,16 @@ let memlog;
 let index;
 let config = configs.webkit;
 
-$: regions = memlog.history[index];
-$: start = memlog.address.start;
-$: end = memlog.address.end;
+$: regions = memlog?.history[index];
+$: start = memlog?.address.start;
+$: end = memlog?.address.end;
 
 function loadSource(source) {
     memlog = load(source);
     index = 0;
 }
 
-loadSource(test);
+// loadSource(test);
 
 </script>
 
