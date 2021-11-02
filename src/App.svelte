@@ -38,32 +38,33 @@ loadSource(test);
 
 </script>
 
-<h1>Memory Viewer</h1>
+<h1>MEMLOG Viewer</h1>
+
+{#if !memlog}
 
 Choose memlog file: <Uploader on:load={event => {
     loadSource(event.detail)
 }} />
 
-<div>
-    <button on:click={ev => rowBytes *= 2}>-</button>
-    {bytes(rowBytes)}
-    <button on:click={ev => rowBytes /= 2}>+</button>
-</div>
+{:else}
 
 <MemoryView {regions} {start} {end} {config} {rowBytes} style="" />
 
-<div style="visibility: hidden">
+<div class="dummy-footer">
     <Footer {config} {memlog} {index} />
 </div>
 
 <footer>
-    <Footer {config} {memlog} bind:index={index} />
+    <Footer {config} {memlog} bind:index={index} bind:rowBytes={rowBytes} />
 </footer>
+
+{/if}
 
 <style>
 
 main {
     text-align: center;
+    padding: 0;
 }
 
 h1 {
@@ -75,9 +76,16 @@ h1 {
 footer {
     position: fixed;
     bottom: 0;
-    width: 96%;
     background-color: white;
     border-top: solid 1px gray;
+}
+
+.dummy-footer {
+    visibility: hidden;
+}
+
+footer, .dummy-footer {
+    width: 100%;
 }
 
 </style>
