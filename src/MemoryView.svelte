@@ -36,7 +36,6 @@ $: start = geo.floor(start);
 $: end = geo.ceil(end);
 
 $: layers = getLayers(regions);
-const disabledLayers = {};
 
 function configFor(region, config): TypeConfig {
     const typeConfig = config.layers[region.layer]?.types[region.type] ?? {};
@@ -51,17 +50,12 @@ function border(region, config): boolean {
     return configFor(region, config).border;
 }
 
+function shouldRenderLayer(layer: string, config: Config): boolean {
+    const layerConfig = config.layers[layer];
+    return !layerConfig.disabled;
+}
 </script>
 
-<ul class="hide-layers">
-    <li class=header>Hide Layer:</li>
-    {#each layers as layer(layer)}
-        <li>
-            <input type=checkbox bind:checked={disabledLayers[layer]}>
-            {layer}
-        </li>
-    {/each}
-</ul>
 <svg {height} {width} {style} class={className}>
     <defs>
         <pattern id="transparent" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" width="8" height="8">
@@ -77,7 +71,7 @@ function border(region, config): boolean {
         <Transform translateX={addressWidth + padding}> 
             <RegionShape {geo} start={start} end={end} color='url(#transparent)'/>
             {#each layers as layer(layer)}
-                {#if !disabledLayers[layer]}
+                {#if shouldRenderLayer(layer, config)}
                     {#each rangesOfLayer(regions, layer) as region}
                         <RegionShape {geo}
                             start={region.addr}

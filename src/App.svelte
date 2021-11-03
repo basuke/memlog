@@ -75,7 +75,7 @@ Choose memlog file: <Uploader on:load={event => {
 <MemoryView {regions} {start} {end} {config} {rowBytes} style="" />
 
 <pre>
-{#each logs as log}
+{#each logs.slice(0, 10) as log}
     {log.line}<br>
 {/each}
 </pre>
