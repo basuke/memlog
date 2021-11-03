@@ -1,11 +1,10 @@
 <script lang="ts">
 
 import MemoryView from './MemoryView.svelte';
-import Legend from './Legend.svelte';
-import { load, Log, parse } from './memlog';
+import { load, Log, Memlog, parse } from './memlog';
 import Uploader from './Uploader.svelte';
 import webkitConfig from './configs/webkit.config';
-import { bytes, K } from './utils';
+import { K, M } from './utils';
 import Footer from './Footer.svelte';
 
 export let rowBytes = 256 * K; // bytes
@@ -15,26 +14,49 @@ const configs = {
 };
 
 const test = `# simple case
-alloc ts:0 layer:vm addr:1*M/2 size:1*M/4
-alloc ts:0 layer:vm addr:2*M size:1*M/2
-split ts:0 layer:vm addr:2*M size:1*M/4
-free ts:0 layer:vm addr:2*M+1*M/4
+alloc ts:0 layer:vm addr:${1*M/2} size:${1*M/4}
+alloc ts:0 layer:vm addr:${2*M} size:${1*M/2}
+split ts:0 layer:vm addr:${2*M} size:${1*M/4}
+free ts:0 layer:vm addr:${2*M+1*M/4}
 `;
 
-let memlog;
+let logs;
+let memlog: Memlog;
 let index;
 let config = configs.webkit;
 
-$: regions = memlog?.history[index];
-$: start = memlog?.address.start;
-$: end = memlog?.address.end;
+let regions;
+let start;
+let end;
 
 function loadSource(source) {
-    memlog = load(source);
+    logs = parse(source);
+    memlog = new Memlog();
     index = 0;
+    start = 0;
+    end = 0;
+    iterate(); 
 }
 
 // loadSource(test);
+
+function step() {
+    if (!logs || !logs.length) return false;
+    const [log, ...newLogs] = logs;
+    logs = newLogs;
+    memlog.add(log);
+
+    index = memlog.length - 1;
+    regions = memlog.getRegions(index);
+    start = memlog.start;
+    end = memlog.end;
+    return true;
+}
+
+function iterate() {
+    const more = Array.from(new Array(500)).every(step);
+    setTimeout(iterate, more ? 17 : 1000);
+}
 
 </script>
 
@@ -48,7 +70,15 @@ Choose memlog file: <Uploader on:load={event => {
 
 {:else}
 
+<button on:click={step}>Process 1</button>
+
 <MemoryView {regions} {start} {end} {config} {rowBytes} style="" />
+
+<pre>
+{#each logs as log}
+    {log.line}<br>
+{/each}
+</pre>
 
 <div class="dummy-footer">
     <Footer {config} {memlog} {index} />
@@ -61,11 +91,6 @@ Choose memlog file: <Uploader on:load={event => {
 {/if}
 
 <style>
-
-main {
-    text-align: center;
-    padding: 0;
-}
 
 h1 {
     color: #ff3e00;

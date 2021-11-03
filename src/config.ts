@@ -5,6 +5,7 @@ export type TypeConfig = {
 
 export type LayerConfig = {
     types: Record<string, TypeConfig>;
+    disabled?: boolean;
 };
 
 export type Config = {

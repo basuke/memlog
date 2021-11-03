@@ -17,7 +17,6 @@ export let rowBytes = 0;
         <button on:click={ev => rowBytes /= 2}><img src="/assets/zoom-in.svg" alt="zoom in"></button>
     </div>
 
-    <pre>{memlog.logs[index]?.line}</pre>
     <input type="range" min="0" max={memlog.length - 1} bind:value={index}>
     <table>
         {#each Object.keys(config.layers) as name}

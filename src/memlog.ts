@@ -10,6 +10,23 @@ enum Actions {
     End = 'end',
 };
 
+const actionMap = {
+    a: Actions.Alloc,
+    s: Actions.Split,
+    m: Actions.Merge,
+    f: Actions.Free,
+    t: Actions.Mod,
+    b: Actions.Begin,
+    e: Actions.End,
+
+    alloc: Actions.Alloc,
+    split: Actions.Split,
+    merge: Actions.Merge,
+    free: Actions.Free,
+    mod: Actions.Mod,
+    begin: Actions.Begin,
+    end: Actions.End,
+};
 export class Log {
     action: string = '';
     ts: number = 0;
@@ -17,13 +34,11 @@ export class Log {
     addr: number = -1;
     size?: number;
     other?: number = -1;
-    color?: string;
     type?: string;
-    attrs: Record<string, string> = {};
     line?: string;
 
     constructor(action: string) {
-        this.action = action;
+        this.action = actionMap[action];
     }
 
     validate(): void {
@@ -60,6 +75,15 @@ export class Log {
     }
 };
 
+function parseNum(value) {
+    if (value === undefined) {
+        return undefined;
+    } else if (value.substr(0, 2) === '0x') {
+        return parseInt(value.substr(2), 16);
+    } else {
+        return parseInt(value);
+    }
+}
 export class Parser {
     no = 0;
     remaining = '';
@@ -67,6 +91,44 @@ export class Parser {
 
     reset(): void {
         this.no = 0;
+    }
+
+    parseLog(log, parameters) {
+        this.comments = [];
+
+        parameters.map(param => {
+            const [key, value] = param.split(':');
+            if (key === 'addr' || key === 'size' || key === 'other' || key === 'ts')
+                log[key] = parseNum(value);
+            else if (key === 'layer' || key === 'type')
+                log[key] = value;
+        });
+    }
+
+    parseShortLog(log: Log, parameters) {
+        log.ts = parseNum(parameters.shift());
+        log.layer = parameters.shift();
+        log.addr = parseNum(parameters.shift());
+
+        switch (log.action) {
+            case Actions.Alloc:
+                log.size = parseNum(parameters.shift());
+                log.type = parameters.shift();
+                break;
+
+            case Actions.Split:
+                log.size = parseNum(parameters.shift());
+                break;
+
+            case Actions.Merge:
+                log.other = parseNum(parameters.shift());
+                break;
+
+            case Actions.Mod:
+                log.type = parameters.shift();
+                break;
+    
+            }
     }
 
     parseLine(line: string): Log | undefined {
@@ -78,20 +140,15 @@ export class Parser {
         }
 
         const [action, ...parameters] = line.split('#')[0].split(/ +/);
-        const log = new Log(action);
+        const log =  new Log(action);
+        if (action.length === 1) {
+            this.parseShortLog(log, parameters);
+        } else {
+            this.parseLog(log, parameters);
+        }
+
         log.line = [...this.comments, lineWithNumber].join("\n");
         this.comments = [];
-
-        parameters.map(param => {
-            const [key, value] = param.split(':');
-            if (key === 'addr' || key === 'size' || key === 'other' || key === 'ts')
-                log[key] = eval(value);
-            else if (key === 'layer' || key === 'type')
-                log[key] = value;
-            else
-                log.attrs[key] = value;
-        });
-
         log.validate();
         return log;
     }
@@ -138,14 +195,47 @@ export function parse(source: string): Log[] {
     return parser.parse(source);
 }
 
-export type Memlog = {
+export class Memlog {
     history: RegionMap[];
-    logs: Log[];
-    length: number;
-    address: {
-        start: number;
-        end: number;
-    };
+    start: number;
+    end: number;
+
+    constructor() {
+        this.history = [{}];
+        this.start = undefined;
+        this.end = undefined;
+    }
+
+    get length() {
+        return this.history.length;
+    }
+
+    get latest(): RegionMap {
+        return this.getRegions(this.history.length - 1);
+    }
+
+    getRegions(index): RegionMap {
+        return this.history[index];
+    }
+
+    add(log: Log) {
+        const prevRegions = this.latest;
+        try {
+            const regions = processLog(prevRegions, log);
+            const [start, end] = calcRange(regions);
+
+            if (this.length > 1) {
+                this.start = Math.min(start, this.start);
+                this.end = Math.max(end, this.end);
+            } else {
+                this.start = start;
+                this.end = end;
+            }
+            this.history.push(regions);
+        } catch (e) {
+            console.error(e);
+        }
+    }
 };
 
 export function load(source): Memlog {
@@ -153,6 +243,9 @@ export function load(source): Memlog {
     let end = -1;
 
     const logs = parse(source);
+    console.log(`${logs.length} lines of logs`, logs.splice(0, 10));
+
+    return null;
     const history = logs.reduce((history: RegionMap[], log: Log): RegionMap[] => {
         const prevRegions = history.length ? history[history.length - 1] : {};
         try {
@@ -170,7 +263,7 @@ export function load(source): Memlog {
     start = Math.max(start, 0);
     end = Math.max(end, 0);
 
-    return { history, logs,  length: history.length, address: { start, end } };
+    // return { history, logs,  length: history.length, address: { start, end } };
 }
 
 function findRegion(map: RegionMap, layer: string, addr: number): string | undefined {
@@ -228,15 +321,7 @@ function mergeRegion(map: RegionMap, region: Region, otherAddr: number): void {
 }
 
 function modRegion(region: Region, log: Log): Region {
-    if ('type' in log) {
-        region.type = log.type;
-    }
-
-    if (log.attrs) {
-        for (const key in log.attrs) {
-            region[key] = log.attrs[key];
-        }
-    }
+    region.type = log.type;
     return region;
 }
 
