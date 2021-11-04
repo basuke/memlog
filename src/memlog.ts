@@ -99,8 +99,6 @@ export class Parser {
     }
 
     parseLog(log, parameters) {
-        this.comments = [];
-
         parameters.map(param => {
             const [key, value] = param.split(':');
             if (key === 'addr' || key === 'size' || key === 'other' || key === 'ts')
