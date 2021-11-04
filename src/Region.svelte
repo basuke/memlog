@@ -50,4 +50,4 @@ function makePath(rows: Row[]) {
 
 </script>
 
-    <path d={path} fill={color} stroke="black" stroke-width={border ? 0.1 : 0}/>
+<path d={path} fill={color} stroke="black" stroke-width={border ? 0.1 : 0}/>

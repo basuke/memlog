@@ -23,15 +23,14 @@ export let rowHeight = 16; // px
 
 $: geo = new Geometry(rowBytes, rowWidth, rowHeight);
 
-$: startRow = geo.addressToRow(regions?.addr ?? 0);
-$: endRow = geo.addressToRow(regions?.end ?? 0);
+$: startAddr = geo.floor(regions?.addr ?? 0);
+$: endAddr = geo.ceil(regions?.end ?? 0);
+
+$: startRow = geo.addressToRow(startAddr);
+$: endRow = geo.addressToRow(endAddr);
 
 $: width = addressWidth + padding + rowWidth;
 $: height = (endRow - startRow) * rowHeight + 2 * topMargin;
-
-$: startAddr = geo.floor(regions?.addr ?? 0);
-$: endAddr = geo.ceil(regions?.end ?? 0);
-$: console.log(startAddr, endAddr);
 
 function configFor(layer, region, config): TypeConfig {
     const typeConfig = config.layers[layer]?.types[region.type] ?? {};
