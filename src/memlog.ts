@@ -1,4 +1,9 @@
-import { calcRange, Region, RegionMap } from './region';
+export type Region = {
+    addr: number;
+    end: number;
+    type?: string;
+    logs?: string[];
+};
 
 enum Actions {
     Alloc = 'alloc',
@@ -195,176 +200,234 @@ export function parse(source: string): Log[] {
     return parser.parse(source);
 }
 
-export class Memlog {
-    history: RegionMap[];
-    start: number;
+interface StartEnd {
+    addr: number;
     end: number;
+};
 
-    constructor() {
-        this.history = [{}];
-        this.start = undefined;
-        this.end = undefined;
+function updateStartEnd(a: StartEnd, b: StartEnd) {
+    if (a.addr === undefined) {
+        a.addr = b.addr;
+        a.end = b.end;
+    } else {
+        a.addr = Math.min(a.addr, b.addr);
+        a.end = Math.max(a.end, b.end);
     }
+}
+export class Layer {
+    name: string;
+    regions: Region[] = [];
+    addr: number = undefined;
+    end: number = undefined;
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    clone(): Layer {
+        const layer = new Layer(this.name);
+        layer.regions = [...this.regions];
+        layer.addr = this.addr;
+        layer.end = this.end;
+        return layer;
+    }
+
+    get length(): number {
+        return this.regions.length;
+    }
+
+    get empty(): boolean {
+        return this.length === 0;
+    }
+
+    getRegion(index: number): Region {
+        return this.regions[index];
+    }
+
+    copyRegion(index: number): Region {
+        const region = this.regions[index];
+        return { ...region, logs: [...region.logs] };
+    }
+
+    insertPosition(addr: number): number {
+        const regions = this.regions;
+        const indexOf = (from: number, end: number): number => {
+            if (from === end) return from;
+
+            const pos = from + Math.floor((end - from) / 2);
+            const region = regions[pos];
+            const delta = addr - region.addr;
+            if (!delta) return pos;
+            if (delta < 0) return indexOf(from, pos);
+            return indexOf(pos + 1, end);
+        };
+        return indexOf(0, regions.length);
+    }
+
+    indexOf(addr: number): number {
+        const pos = this.insertPosition(addr);
+        if (pos >= this.length) return -1;
+
+        const region = this.regions[pos];
+        if (region.addr !== addr) return -1;
+        return pos;
+    }
+
+    alloc(addr: number, size: number, type: string, line: string): Layer {
+        const pos = this.insertPosition(addr);
+        const check = this.getRegion(pos);
+        if (check && check.addr === addr) throw new Error("Region already exists");
+        if (check && check.addr < addr) throw new Error("Invalid sort order");
+
+        const region: Region = {
+            addr,
+            end: addr + size,
+            type: type,
+            logs: [line],
+        };
+    
+        const layer = this.clone();
+        updateStartEnd(layer, region);
+        layer.regions.splice(pos, 0, region);
+        return layer;
+    }
+
+    split(addr: number, size: number, line: string): Layer {
+        const pos = this.indexOf(addr);
+        if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
+
+        const first = this.copyRegion(pos);
+        const next = this.copyRegion(pos);
+
+        if (size <= 0 || (first.addr + size) >= first.end) throw new Error("Cannot split with invalid size ${size}");
+
+        first.end = next.addr = first.addr + size;
+
+        first.logs.push(line);
+        next.logs.push(line);
+    
+        const layer = this.clone();
+        layer.regions.splice(pos, 1, first, next);
+        return layer;
+    }
+
+    merge(addr: number, other: number, line: string): Layer {
+        const pos = this.indexOf(addr);
+        if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
+        if (pos === this.length - 1) throw new Error(`Cannot merge last region`);
+
+        const first = this.copyRegion(pos);
+        const next = this.getRegion(pos + 1);
+        if (next.addr != first.end) throw new Error(`Cannot merge non-neighbor regions`);
+
+        first.end = next.end;
+        first.logs.push(next.logs.join("\n"));
+        first.logs.push(line);
+
+        const layer = this.clone();
+        layer.regions.splice(pos, 2, first);
+        return layer;
+    }
+
+    mod(addr: number, type: string, line: string): Layer {
+        const pos = this.indexOf(addr);
+        if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
+
+        const range = this.copyRegion(pos);
+        range.type = type;
+
+        const layer = this.clone();
+        layer.regions.splice(pos, 1, range);
+        return layer;
+    }
+
+    free(addr: number): Layer {
+        const pos = this.indexOf(addr);
+        if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
+
+        const layer = this.clone();
+        layer.regions.splice(pos, 1);
+        return layer;
+    }
+};
+
+export class Regions {
+    layers: Record<string, Layer> = {};
+    addr: number = undefined;
+    end: number = undefined;
+
+    clone(): Regions {
+        const regions = new Regions();
+        regions.layers = {...this.layers};
+        regions.addr = this.addr;
+        regions.end = this.end;
+        return regions;
+    }
+
+    process(log: Log): Regions {
+        const layerName = log.layer;
+        const regions = this.clone();
+
+        let layer = (layerName in this.layers) ? regions.layers[layerName] : new Layer(layerName);
+
+        switch (log.action) {
+            case Actions.Alloc:
+                layer = layer.alloc(log.addr, log.size, log.type, log.line);
+                break;
+
+            case Actions.Free:
+                layer = layer.free(log.addr);
+                break;
+
+            case Actions.Split:
+                layer = layer.split(log.addr, log.size, log.line);
+                break;
+
+            case Actions.Merge:
+                layer = layer.merge(log.addr, log.other, log.line);
+                break;
+
+            case Actions.Mod:
+                layer = layer.mod(log.addr, log.type, log.line);
+                break;
+
+            default: {
+                return this;
+            }
+        }
+
+        regions.layers[layerName] = layer;
+        updateStartEnd(regions, layer);
+        return regions;
+    }
+}
+export class Memlog {
+    history: Regions[] = [];
+    addr: number;
+    end: number;
 
     get length() {
         return this.history.length;
     }
 
-    get latest(): RegionMap {
-        return this.getRegions(this.history.length - 1);
+    get latest(): Regions {
+        return this.getRegions(this.length - 1);
     }
 
-    getRegions(index): RegionMap {
+    getRegions(index): Regions {
+        if (index < 0 || index >= this.length) return new Regions();
         return this.history[index];
     }
 
-    add(log: Log) {
+    process(log: Log) {
         const prevRegions = this.latest;
         try {
-            const regions = processLog(prevRegions, log);
-            const [start, end] = calcRange(regions);
-
-            if (this.length > 1) {
-                this.start = Math.min(start, this.start);
-                this.end = Math.max(end, this.end);
-            } else {
-                this.start = start;
-                this.end = end;
-            }
+            const regions = prevRegions.process(log);
+            updateStartEnd(this, regions);
             this.history.push(regions);
         } catch (e) {
             console.error(e);
+            console.log(log.line);
         }
     }
 };
-
-export function load(source): Memlog {
-    let start = -1;
-    let end = -1;
-
-    const logs = parse(source);
-    console.log(`${logs.length} lines of logs`, logs.splice(0, 10));
-
-    return null;
-    const history = logs.reduce((history: RegionMap[], log: Log): RegionMap[] => {
-        const prevRegions = history.length ? history[history.length - 1] : {};
-        try {
-            const regions = processLog(prevRegions, log);
-            const range = calcRange(regions);
-            start = start >= 0 ? Math.min(start, range[0]) : range[0];
-            end = end >= 0 ? Math.max(end, range[1]) : range[1];
-            return [...history, regions];
-        } catch (e) {
-            console.error(e);
-            return history;
-        }
-    }, []);
-
-    start = Math.max(start, 0);
-    end = Math.max(end, 0);
-
-    // return { history, logs,  length: history.length, address: { start, end } };
-}
-
-function findRegion(map: RegionMap, layer: string, addr: number): string | undefined {
-    const key = makekey(layer, addr);
-    return (key in map) ? key : undefined;
-}
-
-function getkey(region: Region): string {
-    return makekey(region.layer, region.addr);
-}
-
-function makekey(layer: string, addr: number): string {
-    return layer + ':' + addr;
-}
-
-function newRegion(log: Log): Region {
-    const region: Region = {
-        layer: log.layer,
-        addr: log.addr,
-        size: log.size,
-        end: log.addr + log.size,
-        logs: [log.line],
-    };
-
-    return modRegion(region, log);
-}
-
-function splitRegion(regions: RegionMap, region: Region, size: number): void {
-    const remaining = region.size - size;
-    if (size <= 0 || remaining <= 0) throw new Error("Cannot split with zero or negative size");
-
-    const other = {...region, addr: region.addr + size, size: remaining, logs: [...region.logs]};
-
-    region.size = size;
-    region.end = region.addr + size;
-
-    regions[getkey(region)] = region;
-    regions[getkey(other)] = other;
-}
-
-function mergeRegion(map: RegionMap, region: Region, otherAddr: number): void {
-    const otherKey = findRegion(map, region.layer, otherAddr);
-    if (!otherKey) throw new Error("Cannot find with marge target");
-
-    const other = map[otherKey];
-    if (region.end !== other.addr) {
-        throw new Error("Cannot merge non-neighbors");
-    }
-
-    region.size += other.size;
-    region.end = other.end;
-
-    map[getkey(region)] = region;
-    delete map[otherKey];
-}
-
-function modRegion(region: Region, log: Log): Region {
-    region.type = log.type;
-    return region;
-}
-
-export function processLog(map: RegionMap, log: Log): RegionMap {
-    map = {...map};
-    const key = findRegion(map, log.layer, log.addr);
-
-    switch (log.action) {
-        case Actions.Alloc:
-            if (key) throw new Error("Region already exists");
-            const region = newRegion(log);
-            map[getkey(region)] = region;
-            break;
-
-        case Actions.Begin:
-        case Actions.End:
-            break;
-
-        default:
-            if (!key) throw new Error(`Cannot find region with layer = ${log.layer} and addr = ${log.addr}(0x${log.addr.toString(16)}) \n ${log.line}`);
-
-            map[key].logs = [...map[key].logs, log.line];
-            const copy = {...map[key]};
-
-            switch (log.action) {
-                case Actions.Free:
-                    delete map[key];
-                    break;
-
-                case Actions.Split:
-                    splitRegion(map, copy, log.size);
-                    break;
-
-                case Actions.Merge:
-                    mergeRegion(map, copy, log.other);
-                    break;
-
-                case Actions.Mod:
-                    map[key] = modRegion(copy, log);
-                    break;
-
-            }
-    }
-
-    return map;
-}

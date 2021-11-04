@@ -1,4 +1,4 @@
-import type { RegionMap } from "./region";
+import type { Region } from "./memlog";
 import { M } from "./utils";
 
 export const source1 = `# map file format
@@ -42,11 +42,9 @@ split ts:11 layer:vm addr:0x201100000 size:1048576
 free ts:11 layer:vm addr:0x201200000
 `;
 
-export const samples: RegionMap = {
-    0x20014000: { layer: 'bmalloc', type: 'green', addr: 0x20014000, size: 5 * M},
-    0x20514000: { layer: 'bmalloc', type: 'gray', addr: 0x20514000, size: 1 * M - 0x8000},
-    0x20614000: { layer: 'bmalloc', type: 'pink', addr: 0x20614000, size: M - 0x13000},
-    0x20700000: { layer: 'bmalloc', type: 'orange', addr: 0x20700000, size: 0x100000 + 1230},
-};
-
-
+export const samples: Region[] = [
+    { type: 'green', addr: 0x20014000, end: 0x20014000 + 5 * M},
+    { type: 'gray', addr: 0x20514000, end: 0x20514000 + 1 * M - 0x8000},
+    { type: 'pink', addr: 0x20614000, end: 0x20614000 + M - 0x13000},
+    { type: 'orange', addr: 0x20700000, end: 0x20700000 + 0x100000 + 1230},
+];

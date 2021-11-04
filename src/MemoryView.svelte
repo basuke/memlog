@@ -1,17 +1,14 @@
 <script lang=ts>
 
-import {hex, M} from './utils';
+import { M } from './utils';
 import RegionShape from './Region.svelte';
 import Transform from './Transform.svelte';
 import { Geometry } from './geometry';
-import { layers as getLayers, rangesOfLayer, RegionMap } from './region';
+import type { Regions } from './memlog';
 import type { Config, TypeConfig } from './config';
 import AddressColumn from './AddressColumn.svelte';
 
-export let regions: RegionMap = {};
-export let start = 0;
-export let end = 0;
-
+export let regions: Regions;
 export let config: Config = { layers:{} };
 
 export let className = '';
@@ -26,31 +23,30 @@ export let rowHeight = 16; // px
 
 $: geo = new Geometry(rowBytes, rowWidth, rowHeight);
 
-$: startRow = geo.addressToRow(start);
-$: endRow = geo.addressToRow(end);
+$: startRow = geo.addressToRow(regions?.addr ?? 0);
+$: endRow = geo.addressToRow(regions?.end ?? 0);
 
 $: width = addressWidth + padding + rowWidth;
 $: height = (endRow - startRow) * rowHeight + 2 * topMargin;
 
-$: start = geo.floor(start);
-$: end = geo.ceil(end);
+$: startAddr = geo.floor(regions?.addr ?? 0);
+$: endAddr = geo.ceil(regions?.end ?? 0);
+$: console.log(startAddr, endAddr);
 
-$: layers = getLayers(regions);
-
-function configFor(region, config): TypeConfig {
-    const typeConfig = config.layers[region.layer]?.types[region.type] ?? {};
+function configFor(layer, region, config): TypeConfig {
+    const typeConfig = config.layers[layer]?.types[region.type] ?? {};
     return { color: 'LightSteelBlue', border: true, ...typeConfig };
 }
 
-function color(region, config): string {
-    return configFor(region, config).color;
+function color(layer, region, config): string {
+    return configFor(layer, region, config).color;
 }
 
-function border(region, config): boolean {
-    return configFor(region, config).border;
+function border(layer, region, config): boolean {
+    return configFor(layer, region, config).border;
 }
 
-function shouldRenderLayer(layer: string, config: Config): boolean {
+export function shouldRenderLayer(layer: string, config: Config): boolean {
     const layerConfig = config.layers[layer];
     return !layerConfig.disabled;
 }
@@ -65,19 +61,19 @@ function shouldRenderLayer(layer: string, config: Config): boolean {
 
     <Transform translateY={topMargin - startRow * rowHeight}>
         <!-- label -->
-        <AddressColumn {geo} {start} {end} width={addressWidth} />
+        <AddressColumn {geo} start={startAddr} end={endAddr} width={addressWidth} />
 
         <!-- address map -->
         <Transform translateX={addressWidth + padding}> 
-            <RegionShape {geo} start={start} end={end} color='url(#transparent)'/>
-            {#each layers as layer(layer)}
-                {#if shouldRenderLayer(layer, config)}
-                    {#each rangesOfLayer(regions, layer) as region}
+            <RegionShape {geo} start={startAddr} end={endAddr} color='url(#transparent)'/>
+            {#each Object.values(regions.layers) as layer(layer.name)}
+                {#if shouldRenderLayer(layer.name, config)}
+                    {#each layer.regions as region}
                         <RegionShape {geo}
                             start={region.addr}
                             end={region.end}
-                            color={color(region, config)}
-                            border={border(region, config)}
+                            color={color(layer.name, region, config)}
+                            border={border(layer.name, region, config)}
                         />
                     {/each}
                 {/if}
@@ -93,10 +89,6 @@ function shouldRenderLayer(layer: string, config: Config): boolean {
     justify-content: center;
     padding: 0;
     list-style: none;
-}
-
-.hide-layers li {
-    padding-right: 0.5rem;
 }
 
 .header {

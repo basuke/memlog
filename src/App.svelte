@@ -1,11 +1,12 @@
 <script lang="ts">
 
 import MemoryView from './MemoryView.svelte';
-import { load, Log, Memlog, parse } from './memlog';
+import { Memlog, parse } from './memlog';
 import Uploader from './Uploader.svelte';
 import webkitConfig from './configs/webkit.config';
 import { K, M } from './utils';
 import Footer from './Footer.svelte';
+import Region from './Region.svelte';
 
 export let rowBytes = 256 * K; // bytes
 
@@ -33,24 +34,32 @@ function loadSource(source) {
     logs = parse(source);
     memlog = new Memlog();
     index = 0;
+    regions = memlog.getRegions(index);
     start = 0;
     end = 0;
-    iterate(); 
+    // iterate(); 
 }
 
-// loadSource(test);
+loadSource(test);
 
 function step() {
-    if (!logs || !logs.length) return false;
-    const [log, ...newLogs] = logs;
-    logs = newLogs;
-    memlog.add(log);
+    while (logs && logs.length) {
+        const [log, ...newLogs] = logs;
+        logs = newLogs;
 
-    index = memlog.length - 1;
-    regions = memlog.getRegions(index);
-    start = memlog.start;
-    end = memlog.end;
-    return true;
+        const layerConfig = config.layers[log.layer];
+        console.log(log, layerConfig);
+        if (!layerConfig || layerConfig.disabled) continue;
+
+        memlog.process(log);
+
+        index = memlog.length - 1;
+        regions = memlog.getRegions(index);
+        start = memlog.addr;
+        end = memlog.end;
+        return true;
+    }
+    return false;
 }
 
 function iterate() {
@@ -70,9 +79,14 @@ Choose memlog file: <Uploader on:load={event => {
 
 {:else}
 
-<button on:click={step}>Process 1</button>
+<div>
+    {#if logs.length}
+        <button on:click={step}>Process 1</button>
+    {/if}
+    <button on:click={() => memlog = null }>Clear</button>
+</div>
 
-<MemoryView {regions} {start} {end} {config} {rowBytes} style="" />
+<MemoryView {regions} {config} {rowBytes} style="" />
 
 <pre>
 {#each logs.slice(0, 10) as log}
