@@ -2,7 +2,7 @@ export type Region = {
     addr: number;
     end: number;
     type?: string;
-    logs?: string[];
+    // logs?: string[];
 };
 
 enum Actions {
@@ -246,7 +246,7 @@ export class Layer {
 
     copyRegion(index: number): Region {
         const region = this.regions[index];
-        return { ...region, logs: [...region.logs] };
+        return { ...region };
     }
 
     insertPosition(addr: number): number {
@@ -283,7 +283,6 @@ export class Layer {
             addr,
             end: addr + size,
             type: type,
-            logs: [line],
         };
     
         const layer = this.clone();
@@ -303,9 +302,6 @@ export class Layer {
 
         first.end = next.addr = first.addr + size;
 
-        first.logs.push(line);
-        next.logs.push(line);
-    
         const layer = this.clone();
         layer.regions.splice(pos, 1, first, next);
         return layer;
@@ -321,8 +317,6 @@ export class Layer {
         if (next.addr != first.end) throw new Error(`Cannot merge non-neighbor regions`);
 
         first.end = next.end;
-        first.logs.push(next.logs.join("\n"));
-        first.logs.push(line);
 
         const layer = this.clone();
         layer.regions.splice(pos, 2, first);
