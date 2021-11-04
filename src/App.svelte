@@ -27,14 +27,29 @@ let index;
 let config = configs.webkit;
 
 let regions;
+let worker: Worker;
 
 function loadSource(source) {
-    logs = parse(source);
-    totalLogs = logs.length;
+    if (worker) {
+        worker.terminate();
+        worker = null;
+    }
+
+    worker = new Worker('build/worker.js');
+    worker.onmessage = e => {
+        const log = Log.deseriarize(e.data);
+        console.log('received: ', log);
+        logs = [...logs, log];
+        totalLogs += 1;
+    };
 
     memlog = new Memlog();
     index = 0;
     regions = memlog.getRegions(index);
+    logs = [];
+    totalLogs = 0;
+
+    worker.postMessage(source);
 }
 
 let loading = false;
@@ -93,7 +108,7 @@ Choose memlog file: <Uploader on:load={event => {
 {#if memlog}
 
 <div>
-    {#if logs.length}
+    {#if logs && logs.length}
         {#if loading}
         <button on:click={stop}>Stop</button>
         {:else}

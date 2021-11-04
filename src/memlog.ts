@@ -46,6 +46,32 @@ export class Log {
         this.action = actionMap[action];
     }
 
+    serialize(): string {
+        return [
+            this.action,
+            this.ts,
+            this.layer,
+            this.addr,
+            this.size ?? '',
+            this.other ?? '',
+            this.type ?? '',
+            this.line
+        ].join("\n");
+    }
+
+    static deseriarize(str: string): Log {
+        const [action, ts, layer, addr, size, other, type, ...lines] = str.split("\n");
+        const log = new Log(action);
+        log.ts = parseInt(ts);
+        log.layer = layer;
+        log.addr = parseInt(addr);
+        if (size.length) log.size = parseInt(size);
+        if (other.length) log.other = parseInt(other);
+        if (type.length) log.type = type;
+        log.line = lines.join("\n");
+        return log;
+    }
+
     validate(): void {
         switch (this.action) {
             case Actions.Begin:
