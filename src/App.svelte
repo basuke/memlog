@@ -112,6 +112,7 @@ Choose memlog file: <Uploader on:load={event => {
 
 {#if memlog}
 
+{#if !worker}
 <MemoryView {regions} {config} {rowBytes} style="" />
 
 <div class="dummy-footer">
@@ -121,6 +122,8 @@ Choose memlog file: <Uploader on:load={event => {
 <footer>
     <Footer {config} {memlog} bind:index={index} bind:rowBytes={rowBytes} />
 </footer>
+
+{/if}
 
 {/if}
 
