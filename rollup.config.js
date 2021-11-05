@@ -30,6 +30,29 @@ function serve() {
 	};
 }
 
+function buildWorker(dev) {
+	let proc;
+
+	function toExit() {
+		if (proc) proc.kill(0);
+	}
+
+	return {
+		writeBundle() {
+			if (proc) return;
+			const args = ['run', 'worker', '--'];
+			if (dev) args.push('--watch');
+			proc = require('child_process').spawn('npm', args, {
+				stdio: ['ignore', 'inherit', 'inherit'],
+				shell: true
+			});
+
+			process.on('SIGTERM', toExit);
+			process.on('exit', toExit);
+		}
+	};
+}
+
 export default {
 	input: 'src/main.ts',
 	output: {
@@ -64,6 +87,8 @@ export default {
 			sourceMap: !production,
 			inlineSources: !production
 		}),
+
+		buildWorker(!production),
 
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
