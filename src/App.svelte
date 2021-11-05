@@ -1,7 +1,8 @@
 <script lang="ts">
 
 import MemoryView from './MemoryView.svelte';
-import { Log, Memlog, parse } from './memlog';
+import { Log } from './log';
+import { Memlog } from './memlog';
 import Uploader from './Uploader.svelte';
 import webkitConfig from './configs/webkit.config';
 import { K, M } from './utils';

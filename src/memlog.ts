@@ -1,228 +1,11 @@
+import { Actions, Log } from "./log";
+
 export type Region = {
     addr: number;
     end: number;
     type?: string;
     // logs?: string[];
 };
-
-enum Actions {
-    Alloc = 'alloc',
-    Mod = 'mod',
-    Split = 'split',
-    Merge = 'merge',
-    Free = 'free',
-    Begin = 'begin',
-    End = 'end',
-};
-
-const actionMap = {
-    a: Actions.Alloc,
-    s: Actions.Split,
-    m: Actions.Merge,
-    f: Actions.Free,
-    t: Actions.Mod,
-    b: Actions.Begin,
-    e: Actions.End,
-
-    alloc: Actions.Alloc,
-    split: Actions.Split,
-    merge: Actions.Merge,
-    free: Actions.Free,
-    mod: Actions.Mod,
-    begin: Actions.Begin,
-    end: Actions.End,
-};
-export class Log {
-    action: string = '';
-    ts: number = 0;
-    layer: string = '';
-    addr: number = -1;
-    size?: number;
-    other?: number = -1;
-    type?: string;
-    line?: string;
-
-    constructor(action: string) {
-        this.action = actionMap[action];
-    }
-
-    serialize(): string {
-        return [
-            this.action,
-            this.ts,
-            this.layer,
-            this.addr,
-            this.size ?? '',
-            this.other ?? '',
-            this.type ?? '',
-            this.line
-        ].join("\n");
-    }
-
-    static deseriarize(str: string): Log {
-        const [action, ts, layer, addr, size, other, type, ...lines] = str.split("\n");
-        const log = new Log(action);
-        log.ts = parseInt(ts);
-        log.layer = layer;
-        log.addr = parseInt(addr);
-        if (size.length) log.size = parseInt(size);
-        if (other.length) log.other = parseInt(other);
-        if (type.length) log.type = type;
-        log.line = lines.join("\n");
-        return log;
-    }
-
-    validate(): void {
-        switch (this.action) {
-            case Actions.Begin:
-            case Actions.End:
-                break;
-
-            default:
-                switch (this.action) {
-                    case Actions.Alloc:
-                    case Actions.Split:
-                        if (!this.size)
-                            throw new Error(`'size' is required for ${this.action}`);
-                        break;
-
-                    case Actions.Free:
-                        if (this.size)
-                            throw new Error(`'size' is not allowed for ${this.action}`);
-                        break;
-
-                    case Actions.Merge:
-                        if (this.other < 0)
-                            throw new Error(`'other' is required for ${this.action}`);
-                        break;
-
-                    case Actions.Mod:
-                        break;
-
-                    default:
-                        throw new Error("Invalid action");
-                }
-        }
-    }
-};
-
-function parseNum(value) {
-    if (value === undefined) {
-        return undefined;
-    } else if (value.substr(0, 2) === '0x') {
-        return parseInt(value.substr(2), 16);
-    } else {
-        return parseInt(value);
-    }
-}
-export class Parser {
-    no = 0;
-    remaining = '';
-    comments = [];
-
-    reset(): void {
-        this.no = 0;
-    }
-
-    parseLog(log, parameters) {
-        parameters.map(param => {
-            const [key, value] = param.split(':');
-            if (key === 'addr' || key === 'size' || key === 'other' || key === 'ts')
-                log[key] = parseNum(value);
-            else if (key === 'layer' || key === 'type')
-                log[key] = value;
-        });
-    }
-
-    parseShortLog(log: Log, parameters) {
-        log.ts = parseNum(parameters.shift());
-        log.layer = parameters.shift();
-        log.addr = parseNum(parameters.shift());
-
-        switch (log.action) {
-            case Actions.Alloc:
-                log.size = parseNum(parameters.shift());
-                log.type = parameters.shift();
-                break;
-
-            case Actions.Split:
-                log.size = parseNum(parameters.shift());
-                break;
-
-            case Actions.Merge:
-                log.other = parseNum(parameters.shift());
-                break;
-
-            case Actions.Mod:
-                log.type = parameters.shift();
-                break;
-    
-            }
-    }
-
-    parseLine(line: string): Log | undefined {
-        const lineWithNumber = `${this.no}: ${line}`;
-    
-        if (this.isComment(line)) {
-            this.comments.push(lineWithNumber);
-            return undefined;
-        }
-
-        const [action, ...parameters] = line.split('#')[0].split(/ +/);
-        const log =  new Log(action);
-        if (action.length === 1) {
-            this.parseShortLog(log, parameters);
-        } else {
-            this.parseLog(log, parameters);
-        }
-
-        log.line = [...this.comments, lineWithNumber].join("\n");
-        this.comments = [];
-        log.validate();
-        return log;
-    }
-
-    isComment(line: string): boolean {
-        return (line.length === 0 || line[0] === '#');
-    }
-
-    parse(source: string): Log[] {
-        const logs = [];
-        const lines = source.split("\n");
-        if (lines.length == 1) {
-            this.remaining += source;
-            return [];
-        }
-
-        let remaining = this.remaining;
-        this.remaining = lines.pop();
-
-        for (let line of lines) {
-            this.no++;
-            line = (remaining + line).trim();
-            remaining = '';
-
-            try {
-                const log = this.parseLine(line);
-                if (log) {
-                    logs.push(log);
-                }
-            } catch (e) {
-                this.error(this.no, e, line);
-            }
-        }
-        return logs;
-    }
-
-    error(no: number, error: string, line: string): void {
-        console.warn(`memlog: ${error} at line ${no}: ${line}`);
-    }
-};
-
-export function parse(source: string): Log[] {
-    const parser = new Parser();
-    return parser.parse(source);
-}
 
 interface StartEnd {
     addr: number;
@@ -264,11 +47,16 @@ export class Layer {
         return this.length === 0;
     }
 
-    getRegion(index: number): Region {
+    regionWith(addr: number): Region {
+        const pos = this.indexOf(addr);
+        return pos >= 0 ? this.regionAt(pos) : null;
+    }
+
+    regionAt(index: number): Region {
         return this.regions[index];
     }
 
-    copyRegion(index: number): Region {
+    copyRegionAt(index: number): Region {
         const region = this.regions[index];
         return { ...region };
     }
@@ -299,7 +87,7 @@ export class Layer {
 
     alloc(addr: number, size: number, type: string, line: string): Layer {
         const pos = this.insertPosition(addr);
-        const check = this.getRegion(pos);
+        const check = this.regionAt(pos);
         if (check && check.addr === addr) throw new Error("Region already exists");
         if (check && check.addr < addr) throw new Error("Invalid sort order");
 
@@ -319,8 +107,8 @@ export class Layer {
         const pos = this.indexOf(addr);
         if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
 
-        const first = this.copyRegion(pos);
-        const next = this.copyRegion(pos);
+        const first = this.copyRegionAt(pos);
+        const next = this.copyRegionAt(pos);
 
         if (size <= 0 || (first.addr + size) >= first.end) throw new Error("Cannot split with invalid size ${size}");
 
@@ -336,8 +124,8 @@ export class Layer {
         if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
         if (pos === this.length - 1) throw new Error(`Cannot merge last region`);
 
-        const first = this.copyRegion(pos);
-        const next = this.getRegion(pos + 1);
+        const first = this.copyRegionAt(pos);
+        const next = this.regionAt(pos + 1);
         if (next.addr != first.end) throw new Error(`Cannot merge non-neighbor regions`);
 
         first.end = next.end;
@@ -351,7 +139,7 @@ export class Layer {
         const pos = this.indexOf(addr);
         if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
 
-        const range = this.copyRegion(pos);
+        const range = this.copyRegionAt(pos);
         range.type = type;
 
         const layer = this.clone();
