@@ -27,6 +27,8 @@ let config = configs.webkit;
 
 let regions;
 let worker: Worker;
+let logCount = 0;
+let logProcessed = 0;
 
 function reset() {
     stop();
@@ -43,6 +45,7 @@ function stop() {
 function loadSource(source) {
     stop();
 
+    logCount = logProcessed = 0;
     worker = new Worker('build/worker.js');
     worker.onmessage = e => {
         if (!e.data) {
@@ -50,12 +53,18 @@ function loadSource(source) {
             return;
         }
 
-        const log = Log.deseriarize(e.data);
+        if (typeof e.data === 'number') {
+            logCount = e.data;
+            logProcessed = 0;
+            return;
+        }
 
-        console.log(log.line);
+        const log = Log.deseriarize(e.data);
+        // console.log(log.line);
         memlog.process(log);
         index = memlog.length - 1;
         regions = memlog.getRegions(index);
+        logProcessed += 1;
     };
 
     memlog = new Memlog();
@@ -91,6 +100,7 @@ Choose memlog file: <Uploader on:load={event => {
 
 <div>
     {#if worker}
+        {logProcessed} / {logCount}
         <button on:click={stop}>Stop</button>
     {/if}
     <button class=open on:click={reset}>Open...</button>
