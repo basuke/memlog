@@ -91,9 +91,8 @@ window.onunload = () => stop();
 <nav>
 <h1>MEMLOG Viewer</h1>
 
-<div>index: {index}</div>
 {#if showMemLog}
-<Zoomer bind:rowBytes />
+    <Zoomer bind:rowBytes />
 {/if}
 
 {#if !memlog}
@@ -111,7 +110,6 @@ Choose memlog file: <Uploader on:load={event => {
 
 <div>
     {#if worker}
-        {logProcessed} / {logCount}
         <button on:click={stop}>Stop</button>
     {/if}
     <button class=open on:click={reset}>Open...</button>
@@ -133,6 +131,18 @@ Choose memlog file: <Uploader on:load={event => {
 <footer>
     <Footer {config} {memlog} bind:index={index} />
 </footer>
+
+{:else}
+
+<div class=loading>
+    <p>Loading...</p>
+    {#if logCount}
+        <progress max={logCount} value={logProcessed}> {Math.floor(logProcessed / logCount) * 100}% </progress>
+    {:else}
+        <div><img src="/assets/loading.gif" alt=loading></div>
+    {/if}
+</div>
+
 
 {/if}
 
@@ -156,6 +166,15 @@ h1 {
 .open {
     margin-left: 0.5rem;
 }
+
+.loading {
+    margin-top: 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 footer {
     position: fixed;
     bottom: 0;
