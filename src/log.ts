@@ -81,8 +81,6 @@ export class Log {
                         break;
 
                     case Actions.Free:
-                        if (this.size)
-                            throw new Error(`'size' is not allowed for ${this.action}`);
                         break;
 
                     case Actions.Merge:
@@ -202,6 +200,7 @@ export class CompactLogParser extends LogParser {
                 break;
 
             case Actions.Split:
+            case Actions.Free:
                 log.size = parseNum(parameters.shift());
                 break;
 

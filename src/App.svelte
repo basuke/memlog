@@ -10,17 +10,21 @@ import Footer from './Footer.svelte';
 import { onDestroy } from 'svelte';
 import Zoomer from './Zoomer.svelte';
 
-export let rowBytes = 1 * M; // bytes
+export let rowBytes = 0.5* M; // bytes
 
 const configs = {
     webkit: webkitConfig,
 };
 
-const test = `# simple case
-alloc ts:0 layer:vm addr:${1*M/2} size:${1*M/4}
-alloc ts:0 layer:vm addr:${2*M} size:${1*M/2}
-split ts:0 layer:vm addr:${2*M} size:${1*M/4}
-free ts:0 layer:vm addr:${2*M+1*M/4}
+const test = `# memlog [compact]
+a 0 vm ${1*M/2} ${1*M/4}
+a 0 vm ${2*M} ${1*M/2}
+s 0 vm ${2*M} ${1*M/4}
+f 0 vm ${2*M+1*M/4} ${1*M/4}
+
+a 1 page 0x120000 0xc0000 free
+f 1 page 0x180000 0x400000 free
+
 `;
 
 let memlog: Memlog;

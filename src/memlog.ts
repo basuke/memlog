@@ -7,6 +7,24 @@ export type Region = {
     // logs?: string[];
 };
 
+export function intersect(a: Region, b: Region): Region|null {
+    if (a.end <= b.addr || b.end <= a.addr) return null;
+    const addr = Math.max(a.addr, b.addr);
+    const end = Math.min(a.end, b.end);
+    return { addr, end, type: a.type };
+}
+
+export function subtract(a: Region, b: Region): Region[] {
+    const i = intersect(a, b);
+    if (!i) return [{...a}];
+
+    const type = a.type;
+    return [
+        { addr: a.addr, end: i.addr, type },
+        { addr: i.end, end: a.end, type },
+    ].filter(r => r.addr < r.end);
+}
+
 interface StartEnd {
     addr: number;
     end: number;
@@ -147,9 +165,13 @@ export class Layer {
         return layer;
     }
 
-    free(addr: number): Layer {
-        const pos = this.indexOf(addr);
-        if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
+    free(addr: number, size: number): Layer {
+        const pos = this.insertPosition(addr);
+        if (size) {
+
+        } else {
+            if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
+        }
 
         const layer = this.clone();
         layer.regions.splice(pos, 1);
@@ -182,7 +204,7 @@ export class Regions {
                 break;
 
             case Actions.Free:
-                layer = layer.free(log.addr);
+                layer = layer.free(log.addr, log.size);
                 break;
 
             case Actions.Split:

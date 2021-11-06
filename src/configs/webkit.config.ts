@@ -24,14 +24,14 @@ const config: Config = {
             types: {
                 page: { color: 'SandyBrown' },
             },
-            disabled: false,
+            disabled: true,
         },
-        // page: {
-        //     types: {
-        //         line: { color: 'Sienna', border: false },
-        //         object: { color: 'Orchid', border: false },
-        //     },
-        // },
+        page: {
+            management: "mmap",
+            types: {
+                free: { color: 'blue' },
+            },
+        },
         // jsc: {
         //     types: {
         //         fastMalloc: { color: 'MediumVioletRed', border: true },

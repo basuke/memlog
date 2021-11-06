@@ -6,6 +6,7 @@ export type TypeConfig = {
 export type LayerConfig = {
     types: Record<string, TypeConfig>;
     disabled?: boolean;
+    management?: "mmap";
 };
 
 export type Config = {
