@@ -4,6 +4,7 @@ export let translate: string | [number, number] | undefined = undefined;
 export let translateX: number | undefined = undefined;
 export let translateY: number | undefined = undefined;
 export let rotate: number | undefined = undefined;
+export let comment = '';
 
 $: transform = ((): string => {
     const ops = [];
@@ -32,4 +33,4 @@ $: transform = ((): string => {
 
 </script>
 
-<g {transform}><slot/></g>
+<g {transform} data-comment={comment}><slot/></g>

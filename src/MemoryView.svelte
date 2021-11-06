@@ -65,7 +65,9 @@ export function shouldRenderLayer(layer: string, config: Config): boolean {
         <!-- address map -->
         <Transform translateX={addressWidth + padding}> 
             <RegionShape {geo} start={startAddr} end={endAddr} color='url(#transparent)'/>
-            {#each Object.values(regions.layers) as layer(layer.name)}
+        </Transform>
+        {#each Object.values(regions.layers) as layer(layer.name)}
+            <Transform translateX={addressWidth + padding} comment={layer.name}> 
                 {#if shouldRenderLayer(layer.name, config)}
                     {#each layer.regions as region}
                         <RegionShape {geo}
@@ -76,8 +78,8 @@ export function shouldRenderLayer(layer: string, config: Config): boolean {
                         />
                     {/each}
                 {/if}
-            {/each}
-        </Transform>
+            </Transform>
+        {/each}
     </Transform>
 </svg> 
 

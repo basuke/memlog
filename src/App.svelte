@@ -8,6 +8,7 @@ import webkitConfig from './configs/webkit.config';
 import { K, M } from './utils';
 import Footer from './Footer.svelte';
 import { onDestroy } from 'svelte';
+import Zoomer from './Zoomer.svelte';
 
 export let rowBytes = 1 * M; // bytes
 
@@ -30,6 +31,12 @@ let regions;
 let worker: Worker;
 let logCount = 0;
 let logProcessed = 0;
+
+$: showMemLog = memlog && !worker;
+
+function getRegion(index) {
+    return memlog.getRegions(index);
+}
 
 function reset() {
     stop();
@@ -64,13 +71,11 @@ function loadSource(source) {
         // console.log(log.line);
         memlog.process(log);
         index = memlog.length - 1;
-        regions = memlog.getRegions(index);
         logProcessed += 1;
     };
 
     memlog = new Memlog();
     index = 0;
-    regions = memlog.getRegions(index);
 
     worker.postMessage(source);
 }
@@ -85,6 +90,11 @@ window.onunload = () => stop();
 
 <nav>
 <h1>MEMLOG Viewer</h1>
+
+<div>index: {index}</div>
+{#if showMemLog}
+<Zoomer bind:rowBytes />
+{/if}
 
 {#if !memlog}
 
@@ -113,15 +123,15 @@ Choose memlog file: <Uploader on:load={event => {
 
 {#if memlog}
 
-{#if !worker}
-<MemoryView {regions} {config} {rowBytes} style="" />
+{#if showMemLog}
+<MemoryView regions={getRegion(index)} {config} {rowBytes} style="" />
 
 <div class="dummy-footer">
     <Footer {config} {memlog} {index} />
 </div>
 
 <footer>
-    <Footer {config} {memlog} bind:index={index} bind:rowBytes={rowBytes} />
+    <Footer {config} {memlog} bind:index={index} />
 </footer>
 
 {/if}

@@ -24,7 +24,7 @@ const config: Config = {
             types: {
                 page: { color: 'SandyBrown' },
             },
-            disabled: true,
+            disabled: false,
         },
         // page: {
         //     types: {
