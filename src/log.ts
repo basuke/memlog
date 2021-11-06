@@ -110,16 +110,21 @@ export function parseNum(value) {
     }
 }
 
-export class Parser {
+export class LogParser {
     no = 0;
     remaining = '';
     comments = [];
+    hasTid: boolean = false;
+
+    constructor(flags: string[] = []) {
+        this.hasTid = flags.includes('tid');
+    }
 
     reset(): void {
         this.no = 0;
     }
 
-    parseLog(log, parameters) {
+    parseParams(log, parameters) {
         parameters.map(param => {
             const [key, value] = param.split(':');
             if (key === 'addr' || key === 'size' || key === 'other' || key === 'ts')
@@ -129,51 +134,10 @@ export class Parser {
         });
     }
 
-    parseShortLog(log: Log, parameters) {
-        log.ts = parseNum(parameters.shift());
-        log.layer = parameters.shift();
-        log.addr = parseNum(parameters.shift());
-
-        switch (log.action) {
-            case Actions.Alloc:
-                log.size = parseNum(parameters.shift());
-                log.type = parameters.shift();
-                break;
-
-            case Actions.Split:
-                log.size = parseNum(parameters.shift());
-                break;
-
-            case Actions.Merge:
-                log.other = parseNum(parameters.shift());
-                break;
-
-            case Actions.Mod:
-                log.type = parameters.shift();
-                break;
-    
-            }
-    }
-
     parseLine(line: string): Log | undefined {
-        const lineWithNumber = `${this.no}: ${line}`;
-    
-        if (this.isComment(line)) {
-            this.comments.push(lineWithNumber);
-            return undefined;
-        }
-
-        const [action, ...parameters] = line.split('#')[0].split(/ +/);
+        const [action, ...parameters] = line.split(/ +/);
         const log =  new Log(action);
-        if (action.length === 1) {
-            this.parseShortLog(log, parameters);
-        } else {
-            this.parseLog(log, parameters);
-        }
-
-        log.line = [...this.comments, lineWithNumber].join("\n");
-        this.comments = [];
-        log.validate();
+        this.parseParams(log, parameters);
         return log;
     }
 
@@ -198,10 +162,20 @@ export class Parser {
             remaining = '';
 
             try {
-                const log = this.parseLine(line);
-                if (log) {
+                const lineWithNumber = `${this.no}: ${line}`;
+    
+                if (this.isComment(line)) {
+                    this.comments.push(lineWithNumber);
+                } else {
+                    const log = this.parseLine(line.split('#')[0]);
+
+                    log.line = [...this.comments, lineWithNumber].join("\n");
+                    this.comments = [];
+
+                    log.validate();
                     logs.push(log);
                 }
+        
             } catch (e) {
                 this.error(this.no, e, line);
             }
@@ -214,7 +188,46 @@ export class Parser {
     }
 };
 
+export class CompactLogParser extends LogParser {
+    parseParams(log: Log, parameters) {
+        log.ts = parseNum(parameters.shift());
+        if (this.hasTid) parseNum(parameters.shift());
+        log.layer = parameters.shift();
+        log.addr = parseNum(parameters.shift());
+
+        switch (log.action) {
+            case Actions.Alloc:
+                log.size = parseNum(parameters.shift());
+                log.type = parameters.shift();
+                break;
+
+            case Actions.Split:
+                log.size = parseNum(parameters.shift());
+                break;
+
+            case Actions.Merge:
+                log.other = parseNum(parameters.shift());
+                break;
+
+            case Actions.Mod:
+                log.type = parameters.shift();
+                break;
+    
+            }
+    }
+}
+
+function chooseParser(firstLine: string): LogParser {
+    // # memlog [compact,tid]
+    const matched = firstLine.match(/^\# memlog .*\[(.*)\]/);
+    if (!matched) return new LogParser();
+    const flags = matched[1].split(',');
+
+    return flags.includes('compact') ? new CompactLogParser(flags) : new LogParser(flags);
+}
+
 export function parse(source: string): Log[] {
-    const parser = new Parser();
+    const firstLine = source.substr(0, source.indexOf("\n"));
+    const parser = chooseParser(firstLine);
     return parser.parse(source);
 }
