@@ -1,5 +1,4 @@
-import type { Region } from "./memlog";
-import { M } from "./utils";
+import { Region, M } from "./memlog";
 
 export const source1 = `# map file format
 # vm

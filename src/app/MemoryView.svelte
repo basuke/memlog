@@ -1,12 +1,10 @@
 <script lang=ts>
 
-import { M } from './utils';
 import RegionShape from './Region.svelte';
 import Transform from './Transform.svelte';
-import { Geometry } from './geometry';
-import type { Regions } from './memlog';
-import type { Config, TypeConfig } from './config';
 import AddressColumn from './AddressColumn.svelte';
+import { M, Geometry, Regions } from '../memlog';
+import type { Config, TypeConfig } from '../memlog';
 
 export let regions: Regions;
 export let config: Config = { layers:{} };

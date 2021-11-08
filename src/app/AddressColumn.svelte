@@ -1,6 +1,6 @@
 <script lang=ts>
 
-import type { Geometry } from './geometry';
+import type { Geometry } from '../memlog';
 
 export let geo: Geometry;
 export let start: number;

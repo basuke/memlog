@@ -1,4 +1,4 @@
-import { Log, parse } from './log';
+import { parse } from './memlog';
 import config from './configs/webkit.config';
 
 console.log('Worker started.');

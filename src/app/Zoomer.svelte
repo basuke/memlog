@@ -1,6 +1,6 @@
 <script type=ts>
 
-import { bytes } from "./utils";
+import { bytes } from "../memlog";
 
 export let rowBytes = 0;
 export let left: boolean = false;

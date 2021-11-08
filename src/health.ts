@@ -1,5 +1,4 @@
-import { Log, parse } from './log';
-import { Regions } from './memlog';
+import { Log, Regions, parse } from './memlog';
 
 const logPath = 'C:\\Users\\ysuzuki\\Downloads\\drive-download-20211104T225030Z-001\\memlog-62-11-03-23-57-32.log';
 export let logs = parse(require('fs').readFileSync(logPath).toString()).filter(log => log.layer === 'bmalloc');

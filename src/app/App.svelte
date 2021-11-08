@@ -1,14 +1,12 @@
 <script lang="ts">
 
 import MemoryView from './MemoryView.svelte';
-import { Log } from './log';
-import { Memlog } from './memlog';
 import Uploader from './Uploader.svelte';
-import webkitConfig from './configs/webkit.config';
-import { K, M } from './utils';
+import webkitConfig from '../configs/webkit.config';
 import Footer from './Footer.svelte';
-import { onDestroy } from 'svelte';
 import Zoomer from './Zoomer.svelte';
+import { M, Memlog, Log } from '../memlog';
+import { onDestroy } from 'svelte';
 
 export let rowBytes = 0.5* M; // bytes
 

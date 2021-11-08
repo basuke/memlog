@@ -1,4 +1,4 @@
-import { hex, roundDown, roundUp } from "./utils";
+import { roundDown, roundUp } from "./utils";
 
 export type Row = {
     row: number;
