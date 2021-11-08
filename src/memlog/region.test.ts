@@ -1,4 +1,4 @@
-import { intersect, Region, subtract } from "./memlog";
+import { intersect, Region, subtract } from "./region";
 
 const a: Region = { addr: 10, end: 20, type: 'foo' };
 
