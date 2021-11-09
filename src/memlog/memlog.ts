@@ -28,7 +28,7 @@ export class Regions {
 
         switch (log.action) {
             case Actions.Alloc:
-                layer = layer.alloc(log.addr, log.size, log.type, log.line);
+                layer = layer.alloc(log.addr, log.size, log.type);
                 break;
 
             case Actions.Free:
@@ -36,15 +36,15 @@ export class Regions {
                 break;
 
             case Actions.Split:
-                layer = layer.split(log.addr, log.size, log.line);
+                layer = layer.split(log.addr, log.size);
                 break;
 
             case Actions.Merge:
-                layer = layer.merge(log.addr, log.other, log.line);
+                layer = layer.merge(log.addr, log.other);
                 break;
 
             case Actions.Mod:
-                layer = layer.mod(log.addr, log.type, log.line);
+                layer = layer.mod(log.addr, log.type);
                 break;
 
             default: {

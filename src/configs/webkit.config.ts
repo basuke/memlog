@@ -27,7 +27,7 @@ const config: Config = {
             disabled: true,
         },
         page: {
-            management: "mmap",
+            management: "flexible",
             types: {
                 free: { color: 'blue' },
             },

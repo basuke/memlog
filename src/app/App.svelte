@@ -21,7 +21,7 @@ s 0 vm ${2*M} ${1*M/4}
 f 0 vm ${2*M+1*M/4} ${1*M/4}
 
 a 1 page 0x120000 0xc0000 free
-f 1 page 0x180000 0x400000 free
+f 1 page 0x180000 0x40000 free
 
 `;
 

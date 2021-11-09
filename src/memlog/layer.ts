@@ -1,16 +1,16 @@
 import type { LayerConfig } from './config';
-import type { Region } from './region';
+import { contains, overwrap, Region, SortedRegions, subtract } from './region';
 import { updateStartEnd } from './region';
 
-export abstract class Layer {
+export abstract class Layer extends SortedRegions {
     name: string;
     config: LayerConfig;
-    regions: Region[] = [];
     addr: number = undefined;
     end: number = undefined;
 
-    static create
     constructor(name: string, config: LayerConfig) {
+        super();
+
         this.name = name;
         this.config = config;
     }
@@ -25,63 +25,17 @@ export abstract class Layer {
         return layer;
     }
 
-    get length(): number {
-        return this.regions.length;
-    }
-
-    get empty(): boolean {
-        return this.length === 0;
-    }
-
-    regionWith(addr: number): Region {
-        const pos = this.indexOf(addr);
-        return pos >= 0 ? this.regionAt(pos) : null;
-    }
-
-    regionAt(index: number): Region {
-        return this.regions[index];
-    }
-
-    copyRegionAt(index: number): Region {
-        const region = this.regions[index];
-        return { ...region };
-    }
-
-    insertPosition(addr: number): number {
-        const regions = this.regions;
-        const indexOf = (from: number, end: number): number => {
-            if (from === end) return from;
-
-            const pos = from + Math.floor((end - from) / 2);
-            const region = regions[pos];
-            const delta = addr - region.addr;
-            if (!delta) return pos;
-            if (delta < 0) return indexOf(from, pos);
-            return indexOf(pos + 1, end);
-        };
-        return indexOf(0, regions.length);
-    }
-
-    indexOf(addr: number): number {
-        const pos = this.insertPosition(addr);
-        if (pos >= this.length) return -1;
-
-        const region = this.regions[pos];
-        if (region.addr !== addr) return -1;
-        return pos;
-    }
-
-    abstract alloc(addr: number, size: number, type: string, line: string): Layer;
-    abstract split(addr: number, size: number, line: string): Layer;
-    abstract merge(addr: number, other: number, line: string): Layer;
-    abstract mod(addr: number, type: string, line: string): Layer;
+    abstract alloc(addr: number, size: number, type: string): Layer;
+    abstract split(addr: number, size: number): Layer;
+    abstract merge(addr: number, other: number): Layer;
+    abstract mod(addr: number, type: string): Layer;
     abstract free(addr: number, size: number): Layer;
 };
 
 export class ManagedLayer extends Layer {
     cls(): any { return ManagedLayer; }
 
-    alloc(addr: number, size: number, type: string, line: string): Layer {
+    alloc(addr: number, size: number, type: string): Layer {
         const pos = this.insertPosition(addr);
         const check = this.regionAt(pos);
         if (check && check.addr === addr) throw new Error("Region already exists");
@@ -99,7 +53,7 @@ export class ManagedLayer extends Layer {
         return layer;
     }
 
-    split(addr: number, size: number, line: string): Layer {
+    split(addr: number, size: number): Layer {
         const pos = this.indexOf(addr);
         if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
 
@@ -115,7 +69,7 @@ export class ManagedLayer extends Layer {
         return layer;
     }
 
-    merge(addr: number, other: number, line: string): Layer {
+    merge(addr: number, other: number): Layer {
         const pos = this.indexOf(addr);
         if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
         if (pos === this.length - 1) throw new Error(`Cannot merge last region`);
@@ -131,7 +85,7 @@ export class ManagedLayer extends Layer {
         return layer;
     }
 
-    mod(addr: number, type: string, line: string): Layer {
+    mod(addr: number, type: string): Layer {
         const pos = this.indexOf(addr);
         if (pos < 0) throw new Error(`Cannot find region with layer = ${this.name} and addr = ${addr}(0x${addr.toString(16)})`);
 
@@ -157,27 +111,87 @@ export class ManagedLayer extends Layer {
     }
 };
 
-export class MmapLayer extends Layer {
-    cls(): any { return MmapLayer; }
+export class FlexibleLayer extends Layer {
+    cls(): any { return FlexibleLayer; }
 
-    alloc(addr: number, size: number, type: string, line: string): Layer {
-        return this;
+    alloc(addr: number, size: number, type: string): Layer {
+        let pos = this.insertPosition(addr);
+        let start = pos;
+        let count = 0;
+        let region: Region = {
+            addr,
+            end: addr + size,
+            type: type,
+        };
+        const layer = this.clone();
+
+        if (pos > 0) {
+            const prev = layer.copyRegionAt(pos - 1);
+            if (overwrap(prev, region)) {
+                prev.end = region.addr;
+                layer.regions[pos - 1] = prev;
+            }
+
+            if (prev.end === region.addr && prev.type === region.type) {
+                region.addr = prev.addr;
+                start -= 1;
+                count += 1;
+            }
+        }
+
+        while (pos < layer.length) {
+            const next = layer.regionAt(pos);
+            if (next.addr > region.end) break;
+            if (next.end > region.end) {
+                if (next.type === region.type) {
+                    region.end = next.end;
+                } else {
+                    layer.regions[pos] = { ...next, addr: region.end };
+                    break;
+                }
+            }
+            count += 1;
+            pos += 1;
+        }
+
+        updateStartEnd(layer, region);
+        layer.regions.splice(start, count, region);
+        return layer;
     }
 
-    split(addr: number, size: number, line: string): Layer {
-        return this;
+    split(addr: number, size: number): Layer {
+        throw new Error("split is not supported in FlexibleLayer");
     }
 
-    merge(addr: number, other: number, line: string): Layer {
-        return this;
+    merge(addr: number, other: number): Layer {
+        throw new Error("merge is not supported in FlexibleLayer");
     }
 
-    mod(addr: number, type: string, line: string): Layer {
-        return this;
+    mod(addr: number, type: string): Layer {
+        const [pos, region] = this.find(addr);
+
+        if (pos < 0) {
+            throw new Error('cannot find region with addr');
+        }
+
+        const layer = this.clone();
+        layer.regions.splice(pos, 1, { ...region, type });
+        return layer;
     }
 
     free(addr: number, size: number): Layer {
-        return this;
+        if (size === 0) {
+            throw new Error('size must be valid');
+        }
+
+        const layer = this.clone();
+        const removing = { addr, end: addr + size };
+
+        layer.regions = layer.regions.reduce((regions, region) => {
+            return [...regions, ...subtract(region, removing)];
+        }, []);
+
+        return layer;
     }
 };
 
@@ -195,6 +209,10 @@ export class LayerFactory {
             return null;
         }
 
+        if (config.management && config.management === 'flexible') {
+            console.log(`${name} is flexible layer`)
+            return new FlexibleLayer(name, config);
+        }
         return new ManagedLayer(name, config);
     }
 }
