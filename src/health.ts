@@ -4,7 +4,7 @@ import config from './configs/webkit.config';
 
 const logPath = 'C:\\Users\\ysuzuki\\Downloads\\drive-download-20211104T225030Z-001\\memlog-62-11-03-23-57-32.log';
 export let logs = parse(require('fs').readFileSync(logPath).toString()).filter(log => log.layer === 'bmalloc');
-export let regions = new Regions(new LayerFactory(config.layers));
+export let regions = new Regions(config, new LayerFactory(config.layers));
 
 export let healthCheck = () => {
     if (!regions.layers?.bmalloc) return;

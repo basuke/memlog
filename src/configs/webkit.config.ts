@@ -24,12 +24,20 @@ const config: Config = {
             types: {
                 page: { color: 'SandyBrown' },
             },
-            disabled: true,
+            disabled: false,
+        },
+        mmap: {
+            management: "flexible",
+            types: {
+                anon: { color: 'rgba(192,192,192,0.6)' },
+                free: { color: 'rgba(0,255,0,0.6)' },
+                no: { color: 'rgba(255,0,0,0.6)' },
+            },
         },
         page: {
             management: "flexible",
             types: {
-                free: { color: 'blue' },
+                free: { color: 'LightSlateGrey' },
             },
         },
         // jsc: {

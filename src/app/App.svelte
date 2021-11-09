@@ -5,7 +5,7 @@ import Uploader from './Uploader.svelte';
 import webkitConfig from '../configs/webkit.config';
 import Footer from './Footer.svelte';
 import Zoomer from './Zoomer.svelte';
-import { M, Memlog, Log } from '../memlog';
+import { M, Memlog, Log, hex } from '../memlog';
 import { onDestroy } from 'svelte';
 
 export let rowBytes = 0.5* M; // bytes
@@ -35,10 +35,6 @@ let logCount = 0;
 let logProcessed = 0;
 
 $: showMemLog = memlog && !worker;
-
-function getRegion(index) {
-    return memlog.getRegions(index);
-}
 
 function reset() {
     stop();
@@ -124,7 +120,7 @@ Choose memlog file: <Uploader on:load={event => {
 {#if memlog}
 
 {#if showMemLog}
-<MemoryView regions={getRegion(index)} {config} {rowBytes} style="" />
+<MemoryView regions={memlog.getRegions(index)} {config} {rowBytes} style="" />
 
 <div class="dummy-footer">
     <Footer {config} {memlog} {index} />
@@ -156,6 +152,10 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+main {
+    display: flex;
 }
 
 h1 {

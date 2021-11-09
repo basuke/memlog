@@ -3,7 +3,7 @@
 import RegionShape from './Region.svelte';
 import Transform from './Transform.svelte';
 import AddressColumn from './AddressColumn.svelte';
-import { M, Geometry, Regions } from '../memlog';
+import { M, Geometry, Regions, hex } from '../memlog';
 import type { Config, TypeConfig } from '../memlog';
 
 export let regions: Regions;
@@ -49,7 +49,8 @@ export function shouldRenderLayer(layer: string, config: Config): boolean {
 }
 </script>
 
-<svg {height} {width} {style} class={className}>
+<div class=box>
+<svg {height} {width} {style}>
     <defs>
         <pattern id="transparent" patternUnits="userSpaceOnUse" patternTransform="rotate(45)" width="8" height="8">
             <rect x="0" y="0" width="4" height="8" fill="lightgray"/>
@@ -64,7 +65,7 @@ export function shouldRenderLayer(layer: string, config: Config): boolean {
         <Transform translateX={addressWidth + padding}> 
             <RegionShape {geo} start={startAddr} end={endAddr} color='url(#transparent)'/>
         </Transform>
-        {#each Object.values(regions.layers) as layer(layer.name)}
+        {#each regions.activeLayers() as layer(layer.name)}
             <Transform translateX={addressWidth + padding} comment={layer.name}> 
                 {#if shouldRenderLayer(layer.name, config)}
                     {#each layer.regions as region}
@@ -81,17 +82,34 @@ export function shouldRenderLayer(layer: string, config: Config): boolean {
     </Transform>
 </svg> 
 
+{#each regions.activeLayers() as layer(layer.name)}
+    <div class="regions" style="height: {height}px">
+        <div class=title>{layer.name}</div>
+
+        {#each layer.regions as region(region.addr)}
+            <div class="region">{hex(region.addr, '')}-{hex(region.end, '')}</div>
+        {/each}
+    </div>
+{/each}
+</div>
+
 <style>
 
-.hide-layers {
-    display: flex;
-    justify-content: center;
-    padding: 0;
-    list-style: none;
+.regions {
+    margin-left: 0.5rem;
+    min-height: 10rem;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
-.header {
-    font-weight: bolder;
+.region {
+    word-break: keep-all;
+}
+
+.box {
+    display: flex;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: x-small;
 }
 
 </style>

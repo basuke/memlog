@@ -7,18 +7,25 @@ export class Regions {
     layers: Record<string, Layer> = {};
     addr: number = undefined;
     end: number = undefined;
+    log: Log;
+    config: Config;
     factory: LayerFactory;
 
-    constructor(factory: LayerFactory) {
+    constructor(config: Config, factory: LayerFactory) {
+        this.config = config;
         this.factory = factory;
     }
 
     clone(): Regions {
-        const regions = new Regions(this.factory);
+        const regions = new Regions(this.config, this.factory);
         regions.layers = {...this.layers};
         regions.addr = this.addr;
         regions.end = this.end;
         return regions;
+    }
+
+    activeLayers(): Layer[] {
+        return Object.keys(this.config.layers).map(name => this.layers[name]).filter(layer => layer);
     }
 
     process(log: Log): Regions {
@@ -48,13 +55,17 @@ export class Regions {
                 break;
 
             default: {
-                return this;
+                layer = layer.clone();
+                break;
             }
         }
 
         const regions = this.clone();
         regions.layers[layerName] = layer;
-        updateStartEnd(regions, layer);
+        if (layer.addr !== undefined) {
+            updateStartEnd(regions, layer);
+        }
+        regions.log = log;
         return regions;
     }
 }
@@ -80,7 +91,7 @@ export class Memlog {
     }
 
     getRegions(index): Regions {
-        if (index < 0 || index >= this.length) return new Regions(this.factory);
+        if (index < 0 || index >= this.length) return new Regions(this.config, this.factory);
         return this.history[index];
     }
 

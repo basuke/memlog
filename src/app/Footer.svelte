@@ -8,6 +8,8 @@ export let config;
 
 let playing = false;
 
+$: regions = memlog.getRegions(index);
+
 function step() {
     if (playing && index < memlog.length - 1) {
         index += 1;
@@ -25,6 +27,7 @@ function start() {
 </script>
 
 <div class="base">
+    {#if regions && regions.log}<pre>{regions.log.line}</pre>{/if}
     <div class=bar>
         {#if playing}
         <button on:click={ev => playing = false }><img src="/assets/stop.svg" alt="stop playing"></button>
@@ -50,6 +53,7 @@ input[type=range] {
     display: block;
     width: 100%;
     margin: 0 0.5rem;
+    padding: 0;
 }
 
 th {

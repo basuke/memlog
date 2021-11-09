@@ -10,8 +10,8 @@ export function roundUp(val, alignment) {
     return Math.ceil(val / alignment) * alignment;
 }
 
-export function hex(val, places = 0) {
-    return '0x' + val.toString(16);
+export function hex(val, prefix = '0x') {
+    return prefix + val.toString(16);
 }
 
 export function arrayOfSize(count: number) {
