@@ -1,18 +1,24 @@
+import type { LayerConfig } from './config';
 import type { Region } from './region';
 import { updateStartEnd } from './region';
 
-export class Layer {
+export abstract class Layer {
     name: string;
+    config: LayerConfig;
     regions: Region[] = [];
     addr: number = undefined;
     end: number = undefined;
 
-    constructor(name: string) {
+    static create
+    constructor(name: string, config: LayerConfig) {
         this.name = name;
+        this.config = config;
     }
 
+    abstract cls(): any;
     clone(): Layer {
-        const layer = new Layer(this.name);
+        const cls = this.cls();
+        const layer = new cls(this.name, this.config);
         layer.regions = [...this.regions];
         layer.addr = this.addr;
         layer.end = this.end;
@@ -64,6 +70,16 @@ export class Layer {
         if (region.addr !== addr) return -1;
         return pos;
     }
+
+    abstract alloc(addr: number, size: number, type: string, line: string): Layer;
+    abstract split(addr: number, size: number, line: string): Layer;
+    abstract merge(addr: number, other: number, line: string): Layer;
+    abstract mod(addr: number, type: string, line: string): Layer;
+    abstract free(addr: number, size: number): Layer;
+};
+
+export class ManagedLayer extends Layer {
+    cls(): any { return ManagedLayer; }
 
     alloc(addr: number, size: number, type: string, line: string): Layer {
         const pos = this.insertPosition(addr);
@@ -140,3 +156,45 @@ export class Layer {
         return layer;
     }
 };
+
+export class MmapLayer extends Layer {
+    cls(): any { return MmapLayer; }
+
+    alloc(addr: number, size: number, type: string, line: string): Layer {
+        return this;
+    }
+
+    split(addr: number, size: number, line: string): Layer {
+        return this;
+    }
+
+    merge(addr: number, other: number, line: string): Layer {
+        return this;
+    }
+
+    mod(addr: number, type: string, line: string): Layer {
+        return this;
+    }
+
+    free(addr: number, size: number): Layer {
+        return this;
+    }
+};
+
+export class LayerFactory {
+    configs: Record<string, LayerConfig>;
+
+    constructor(configs: Record<string, LayerConfig>) {
+        this.configs = configs;
+    }
+
+    create(name: string): Layer|null {
+        const config = this.configs[name];
+        if (!config || config.disabled) {
+            console.warn(!config ? `cannot find layer config for ${name}` : `layer ${name} is disabled`);
+            return null;
+        }
+
+        return new ManagedLayer(name, config);
+    }
+}

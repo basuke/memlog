@@ -76,7 +76,7 @@ function loadSource(source) {
         logProcessed += 1;
     };
 
-    memlog = new Memlog();
+    memlog = new Memlog(config);
     index = 0;
 
     worker.postMessage(source);
