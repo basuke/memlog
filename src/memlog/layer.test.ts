@@ -73,10 +73,30 @@ describe("tests FlexibleLayer", () => {
     });
 
     // ===
-
+    
     test("merging whole regions", () => {
         const result = layer.alloc(20, 10, 'a');
         expect(result.length).toEqual(1);
         expect(result.regions[0]).toEqual({ addr: 10, end: 40, type: 'a' });
+    });
+
+
+    // ===
+
+    test("case", () => {
+        const layer = new FlexibleLayer('mmap', config);
+        layer.regions = [
+            {addr: 0x200f50000, end: 0x200f60000, type: 'anon'},
+            {addr: 0x200f64000, end: 0x200f70000, type: 'anon'},
+            {addr: 0x201000000, end: 0x20110c000, type: 'anon'},
+            {addr: 0x201200000, end: 0x201300000, type: 'anon'},
+        ];
+        // 76: a 10 101928 mmap 0x201204000 16384 free
+        const result = layer.alloc(0x201204000, 16384, 'free');
+        expect(result.regions[3].end).toEqual(0x201204000);
+        expect(result.length).toEqual(6);
+        expect(result.regions[4].end).toEqual(0x201204000 + 16384);
+        expect(result.regions[4].type).toEqual('free');
+        expect(result.regions[5]).toEqual({ addr: 0x201204000 + 16384, end: 0x201300000, type: 'anon' });
     });
 });

@@ -115,47 +115,35 @@ export class FlexibleLayer extends Layer {
     cls(): any { return FlexibleLayer; }
 
     alloc(addr: number, size: number, type: string): Layer {
+        const layer = this.free(addr, size);
+
         let pos = this.insertPosition(addr);
         let start = pos;
-        let count = 0;
+        let end = pos;
         let region: Region = {
             addr,
             end: addr + size,
-            type: type,
+            type,
         };
-        const layer = this.clone();
 
         if (pos > 0) {
-            const prev = layer.copyRegionAt(pos - 1);
-            if (overwrap(prev, region)) {
-                prev.end = region.addr;
-                layer.regions[pos - 1] = prev;
-            }
-
-            if (prev.end === region.addr && prev.type === region.type) {
+            const prev = layer.regionAt(pos - 1);
+            if (prev.end === addr && prev.type === type) {
                 region.addr = prev.addr;
                 start -= 1;
-                count += 1;
             }
         }
 
-        while (pos < layer.length) {
+        if (pos < layer.length) {
             const next = layer.regionAt(pos);
-            if (next.addr > region.end) break;
-            if (next.end > region.end) {
-                if (next.type === region.type) {
-                    region.end = next.end;
-                } else {
-                    layer.regions[pos] = { ...next, addr: region.end };
-                    break;
-                }
+            if (next.addr === region.end && next.type === type) {
+                region.end = next.end;
+                end += 1;
             }
-            count += 1;
-            pos += 1;
         }
 
         updateStartEnd(layer, region);
-        layer.regions.splice(start, count, region);
+        layer.regions.splice(start, end - start, region);
         return layer;
     }
 
