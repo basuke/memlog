@@ -114,4 +114,16 @@ export class SortedRegions {
         }
         return [-1, null];
     }
+
+    insert(pos: number, region: Region) {
+        this.regions.splice(pos, 0, region);
+    }
+
+    remove(pos: number) {
+        this.regions.splice(pos, 1);
+    }
+
+    removeAndInsert(start: number, stop: number, regions: Region[]) {
+        this.regions.splice(start, stop - start, ...regions);
+    }
 }

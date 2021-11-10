@@ -111,39 +111,60 @@ export class ManagedLayer extends Layer {
     }
 };
 
+function removeRegion(src: SortedRegions, region: Region): [number, number, SortedRegions] {
+    let start = src.insertPosition(region.addr);
+    let stop = start;
+    while (stop < src.length && src.regionAt(stop).addr <= region.end) {
+        stop += 1;
+    }
+    if (start > 0) {
+        const prev = src.regionAt(start - 1);
+        if (prev.end >= region.addr) start -= 1;
+    }
+    const result = new SortedRegions();
+    result.regions = src.regions.slice(start, stop).reduce((a, b) => {
+        return [...a, ...subtract(b, region)];
+    }, []);
+
+    if (result.length) {
+        for (const r of result.regions) {
+            updateStartEnd(result, r);
+        }
+    }
+    return [start, stop, result];
+}
+
 export class FlexibleLayer extends Layer {
     cls(): any { return FlexibleLayer; }
 
     alloc(addr: number, size: number, type: string): Layer {
-        const layer = this.free(addr, size);
+        const end = addr + size;
+        const region: Region = { addr, end, type };
+        const [start, stop, sub] = removeRegion(this, region);
 
-        let pos = this.insertPosition(addr);
-        let start = pos;
-        let end = pos;
-        let region: Region = {
-            addr,
-            end: addr + size,
-            type,
-        };
-
+        let pos = sub.insertPosition(addr);
         if (pos > 0) {
-            const prev = layer.regionAt(pos - 1);
-            if (prev.end === addr && prev.type === type) {
+            const prev = sub.regionAt(pos - 1);
+            if (prev.type === type && prev.end === region.addr) {
+                pos -= 1;
                 region.addr = prev.addr;
-                start -= 1;
+                sub.remove(pos);
             }
         }
 
-        if (pos < layer.length) {
-            const next = layer.regionAt(pos);
-            if (next.addr === region.end && next.type === type) {
+        if (pos < sub.length) {
+            const next = sub.regionAt(pos);
+            if (next.type === type && next.addr === region.end) {
                 region.end = next.end;
-                end += 1;
+                sub.remove(pos);
             }
         }
 
-        updateStartEnd(layer, region);
-        layer.regions.splice(start, end - start, region);
+        sub.insert(pos, region);
+
+        const layer = this.clone();
+        layer.removeAndInsert(start, stop, sub.regions);
+        updateStartEnd(layer, sub);
         return layer;
     }
 
@@ -172,13 +193,12 @@ export class FlexibleLayer extends Layer {
             throw new Error('size must be valid');
         }
 
+        const end = addr + size;
+        const [start, stop, sub] = removeRegion(this, { addr, end });
+
         const layer = this.clone();
-        const removing = { addr, end: addr + size };
-
-        layer.regions = layer.regions.reduce((regions, region) => {
-            return [...regions, ...subtract(region, removing)];
-        }, []);
-
+        layer.removeAndInsert(start, stop, sub.regions);
+        updateStartEnd(layer, sub);
         return layer;
     }
 };
