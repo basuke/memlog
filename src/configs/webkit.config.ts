@@ -29,8 +29,8 @@ const config: Config = {
         mmap: {
             management: "flexible",
             types: {
-                anon: { color: 'rgba(192,192,192,0.6)' },
-                free: { color: 'rgba(0,255,0,0.6)' },
+                anon: { color: 'rgba(0,0,0,0)', border: 0.5 },
+                free: { color: 'rgba(0,192,0,0.3)', border: 0.5 },
                 no: { color: 'rgba(255,0,0,0.6)' },
             },
         },

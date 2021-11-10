@@ -6,15 +6,14 @@ export let start = 0;
 export let end = 0;
 export let geo: Geometry;
 export let color = 'green';
-export let border: boolean = false;
-export let width: number = 0.1;
+export let border: { color: string, width: number } = { color: 'black', width: 0.1 };
 
 $: rows = geo.makeRows(start, end);
 $: path = makePath(rows);
 
 function makePath(rows: Row[]) {
     const commands =[];
-    const d = width / 2;
+    const d = border.width / 2;
 
     function box(row: Row) {
         const {top, left, bottom, right} = geo.rowToRect(row, d);
@@ -50,4 +49,4 @@ function makePath(rows: Row[]) {
 
 </script>
 
-<path d={path} fill={color} stroke="black" stroke-width={border ? 0.1 : 0}/>
+<path d={path} fill={color} stroke={border.color} stroke-width={border.width}/>

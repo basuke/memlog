@@ -9,7 +9,6 @@ import type { Config, TypeConfig } from '../memlog';
 export let regions: Regions;
 export let config: Config = { layers:{} };
 
-export let className = '';
 export let style = '';
 
 export let topMargin = 1; // px
@@ -39,8 +38,31 @@ function color(layer, region, config): string {
     return configFor(layer, region, config).color;
 }
 
-function border(layer, region, config): boolean {
-    return configFor(layer, region, config).border;
+function borderConfig(layer, region, config): { color:string, width:number } {
+    const border = { color: 'black', width: 0.5 };
+    // border?: boolean|number|string|{width?:number, color?:string};
+    const value = configFor(layer, region, config).border;
+    if (typeof value === 'boolean') {
+        if (!value) {
+            border.width = 0;
+            border.color = 'transparent';
+        }
+    } else if (typeof value === 'number') {
+        border.width = value;
+    } else if (typeof value === 'string') {
+        border.color = value;
+    } else {
+        return { ...border, ...value };
+    }
+    return border;
+}
+
+function borderWidth(layer, region, config): number {
+    return borderConfig(layer, region, config).width;
+}
+
+function borderColor(layer, region, config): string {
+    return borderConfig(layer, region, config).color;
 }
 
 export function shouldRenderLayer(layer: string, config: Config): boolean {
@@ -73,7 +95,7 @@ export function shouldRenderLayer(layer: string, config: Config): boolean {
                             start={region.addr}
                             end={region.end}
                             color={color(layer.name, region, config)}
-                            border={border(layer.name, region, config)}
+                            border={borderConfig(layer.name, region, config)}
                         />
                     {/each}
                 {/if}
