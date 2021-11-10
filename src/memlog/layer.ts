@@ -198,7 +198,6 @@ export class FlexibleLayer extends Layer {
 
         const layer = this.clone();
         layer.removeAndInsert(start, stop, sub.regions);
-        updateStartEnd(layer, sub);
         return layer;
     }
 };

@@ -117,6 +117,7 @@ export class SortedRegions {
 
     insert(pos: number, region: Region) {
         this.regions.splice(pos, 0, region);
+        updateStartEnd(this, region);
     }
 
     remove(pos: number) {
