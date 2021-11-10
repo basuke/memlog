@@ -24,7 +24,7 @@ const config: Config = {
             types: {
                 page: { color: 'SandyBrown' },
             },
-            disabled: false,
+            disabled: true,
         },
         mmap: {
             management: "flexible",
@@ -36,6 +36,7 @@ const config: Config = {
         },
         page: {
             management: "flexible",
+            disabled: false,
             types: {
                 free: { color: 'LightSlateGrey' },
             },

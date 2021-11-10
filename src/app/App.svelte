@@ -136,6 +136,8 @@ Choose memlog file: <Uploader on:load={event => {
     <p>Loading...</p>
     {#if logCount}
         <progress max={logCount} value={logProcessed}> {Math.floor(logProcessed / logCount) * 100}% </progress>
+        <br>
+        {logProcessed} / {logCount}
     {:else}
         <div><img src="/assets/loading.gif" alt=loading></div>
     {/if}

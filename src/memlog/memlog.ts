@@ -65,7 +65,7 @@ export class Regions {
         if (layer.addr !== undefined) {
             updateStartEnd(regions, layer);
         }
-        regions.log = log;
+        // regions.log = log;
         return regions;
     }
 }

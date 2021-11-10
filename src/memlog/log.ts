@@ -40,6 +40,18 @@ export class Log {
         this.action = actionMap[action];
     }
 
+    clone() {
+        const log = new Log(this.action);
+        log.ts = this.ts;
+        log.layer = this.layer;
+        log.addr = this.addr;
+        log.size = this.size;
+        log.other = this.other;
+        log.type = this.type;
+        log.line = this.line;
+        return log;
+    }
+
     serialize(): string {
         return [
             this.action,
