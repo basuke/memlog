@@ -100,6 +100,9 @@ export class Memlog {
         try {
             const regions = prevRegions.process(log);
             updateStartEnd(this, regions);
+            if (this.history.length > 1000) {
+                this.history.splice(0, this.history.length - 1000 + 1);
+            }
             this.history.push(regions);
         } catch (e) {
             console.error(e);

@@ -1,8 +1,9 @@
 {
-  "name": "svelte-app",
+  "name": "memlog",
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "cli": "ts-node ./scripts/cli.ts",
     "build": "rollup -c",
     "worker": "rollup -c rollup.config.worker.js",
     "dev": "rollup -c -w",
@@ -29,6 +30,9 @@
     "typescript": "^4.0.0"
   },
   "dependencies": {
-    "sirv-cli": "^1.0.0"
+    "cli-progress": "^3.9.1",
+    "minimist": "^1.2.5",
+    "sirv-cli": "^1.0.0",
+    "ts-node": "^10.4.0"
   }
 }
