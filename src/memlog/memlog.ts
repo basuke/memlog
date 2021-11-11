@@ -65,7 +65,7 @@ export class Regions {
         if (layer.addr !== undefined) {
             updateStartEnd(regions, layer);
         }
-        // regions.log = log;
+        regions.log = log;
         return regions;
     }
 }
@@ -76,6 +76,7 @@ export class Memlog {
     end: number;
     config: Config;
     factory: LayerFactory;
+    limit: number = 10000;
 
     constructor(config: Config) {
         this.config = config;
@@ -100,8 +101,8 @@ export class Memlog {
         try {
             const regions = prevRegions.process(log);
             updateStartEnd(this, regions);
-            if (this.history.length > 1000) {
-                this.history.splice(0, this.history.length - 1000 + 1);
+            if (this.history.length > this.limit) {
+                this.history.splice(0, this.history.length - this.limit + 1);
             }
             this.history.push(regions);
         } catch (e) {

@@ -15,13 +15,14 @@ const configs = {
 };
 
 const test = `# memlog [compact]
-a 0 vm ${1*M/2} ${1*M/4}
-a 0 vm ${2*M} ${1*M/2}
-s 0 vm ${2*M} ${1*M/4}
-f 0 vm ${2*M+1*M/4} ${1*M/4}
+a 0 bmalloc ${1*M/2} ${1*M/4}
+a 0 bmalloc ${2*M} ${1*M/2}
+s 0 bmalloc ${2*M} ${1*M/4}
+f 0 bmalloc ${2*M+1*M/4} ${1*M/4}
 
-a 1 page 0x120000 0xc0000 free
-f 1 page 0x180000 0x40000 free
+a 1 mmap 0x120000 0xc0000 anon
+a 1 mmap 0x180000 0x40000 free
+f 1 mmap 0x1B0000 0x40000
 
 `;
 

@@ -52,7 +52,7 @@ onmessage = function(e) {
     let logs = parse(source).filter(log => {
         const layerConfig = layerConfigOf(log);
         return (layerConfig && !layerConfig.disabled);
-    });
+    }).slice(0, 10000);
 
     // logs = mergeLogs(logs);
 

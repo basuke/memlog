@@ -2,29 +2,25 @@ import type { Config } from "../memlog";
 
 const config: Config = {
     layers: {
-        vm: {
-            types: {
-                rw: { color: 'lightblue' },
-            },
-        },
         bmalloc: {
             types: {
                 free: { color: 'WhiteSmoke' },
-                large: { color: 'SlateBlue' },
+                large: { color: 'MediumSlateBlue' },
                 chunk: { color: 'Wheat' },
-                perProcess: { color: 'lime' },
-                perThread: { color: 'Teal' },
+                perProcess: { color: 'MediumSeaGreen' },
+                perThread: { color: 'MediumVioletRed' },
                 vector: { color: 'Turquoise' },
                 objectTypeTable: { color: 'DarkOliveGreen' },
-                external: { color: 'PaleGreen' },
             },
         },
         chunk: {
-            // containedBy: 'bmalloc.chunk',
+            management: "flexible",
+            disabled: false,
             types: {
+                header: { color: 'RosyBrown' },
                 page: { color: 'SandyBrown' },
+                decommit: { color: 'Wheat' },
             },
-            disabled: true,
         },
         mmap: {
             management: "flexible",
@@ -32,13 +28,6 @@ const config: Config = {
                 anon: { color: 'rgba(0,0,0,0)', border: 0.5 },
                 free: { color: 'rgba(0,192,0,0.3)', border: 0.5 },
                 no: { color: 'rgba(255,0,0,0.6)' },
-            },
-        },
-        page: {
-            management: "flexible",
-            disabled: false,
-            types: {
-                free: { color: 'LightSlateGrey' },
             },
         },
         // jsc: {
